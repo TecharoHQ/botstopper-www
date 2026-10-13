@@ -1,0 +1,107 @@
+# Headless browser detection
+
+BotStopper can run a headless browser detector on the challenge page. The detector is a small WebAssembly module. It examines the browser for signs of automation. Before the client submits the challenge, the detector sends a report to BotStopper.
+
+BotStopper uses the report in these ways:
+
+- If the report contains a hard signal, the challenge fails. For example, `navigator.webdriver` is `true`, or the user agent contains `HeadlessChrome`.
+- If the page did not download the detector before the report arrived, the challenge fails. A report without these downloads did not come from the detector.
+- If the Fetch Metadata headers of the report or the downloads are incorrect, the challenge fails. Refer to [Fetch Metadata](#fetch-metadata).
+- Policy expressions can use the score of the report on later requests.
+
+## Enable the detector
+
+To enable the detector, add `headless` to the `extensions` list of a challenge. You can use the detector with all challenge algorithms.
+
+```yaml
+thresholds:
+  - name: moderate-suspicion
+    expression:
+      all:
+        - weight >= 10
+        - weight < 20
+    action: CHALLENGE
+    challenge:
+      algorithm: fast
+      difficulty: 2
+      extensions:
+        - headless
+```
+
+BotStopper sends the client-side detection logic as [brotli-compressed bytes](https://developer.mozilla.org/en-US/docs/Glossary/Brotli_compression). Most browsers only accept brotli over HTTPS. To use this detector, you need the following configuration:
+
+1. Your site [**MUST**](https://www.rfc-editor.org/info/rfc2119/#section-1) be served over [HTTPS](https://developer.mozilla.org/en-US/docs/Glossary/HTTPS).
+2. Your reverse proxy or CDN [**MUST**](https://www.rfc-editor.org/info/rfc2119/#section-1) send the unedited [`Accept-Encoding`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Accept-Encoding) header from the client to BotStopper.
+3. Your reverse proxy or CDN [**SHOULD**](https://www.rfc-editor.org/info/rfc2119/#section-3) send the unedited `Sec-CH-UA` and `Sec-CH-UA-Full-Version-List` headers from the client to BotStopper.
+4. Your reverse proxy or CDN [**SHOULD**](https://www.rfc-editor.org/info/rfc2119/#section-3) send the unedited `Sec-Fetch-Dest`, `Sec-Fetch-Mode`, `Sec-Fetch-Site`, and `Origin` headers from the client to BotStopper.
+
+If a client does not accept brotli, BotStopper sends an empty file. The detector does not run, and the challenge fails.
+
+The headless extension requires WebAssembly. A browser with WebAssembly disabled, including iOS Lockdown Mode, cannot pass a policy that requires this extension. A `noWasm` report or detector-level error fails the challenge, even after both detector downloads. Individual inconclusive probes retain their existing scores.
+
+BotStopper records the detector downloads for each challenge. The URLs of the detector files contain the challenge ID, so the browser downloads the files again for each challenge (about 35 KB). The files have the header `Cache-Control: no-cache`. If a proxy or CDN serves the detector files from its cache, the downloads do not reach BotStopper, and the challenges fail.
+
+## Client hints
+
+Chromium browsers send their brand names in [user agent client hints](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Client_hints#user_agent_client_hints). The challenge page contains the tag `<meta http-equiv="Accept-CH" content="Sec-CH-UA-Full-Version-List">`. Thus Chromium sends the full brand list when it sends the report.
+
+BotStopper examines the client hint headers of the report request. Scripts on the page cannot change these headers.
+
+If the headers are missing or BotStopper cannot parse them, the score does not change.
+
+## Policy variables
+
+| Variable                     | Type | Value                                                                                          |
+| :--------------------------- | :--- | :--------------------------------------------------------------------------------------------- |
+| `headlessScore`              | int  | The score of the report for this session. The value is 0 if there is no session or no report.  |
+| `headlessNetworkHardReports` | int  | The number of reports with hard signals from the network of the client (IPv4 /24 or IPv6 /48). |
+
+The detector runs at the same time as the challenge. Thus BotStopper knows the session score only after the client sends its report:
+
+- When BotStopper issues a challenge, `headlessScore` is 0. The score cannot select a more difficult challenge.
+- When the client submits the challenge, BotStopper uses the score. BotStopper also uses the score on all later requests of the session.
+
+`headlessNetworkHardReports` is known when BotStopper issues a challenge, because it comes from earlier reports.
+
+Use `headlessScore` only to deny a session. To deny a session:
+
+1. Add a large weight with a `WEIGH` rule.
+2. Put a `DENY` threshold for that weight first in the `thresholds` list.
+
+The client completes the challenge and gets a cookie. BotStopper then denies the next request of the client.
+
+```yaml
+bots:
+  - name: headless-network
+    action: DENY
+    expression: headlessNetworkHardReports >= 3
+  - name: headless-soft
+    action: WEIGH
+    expression: headlessScore >= 20
+    weight:
+      adjust: 1000
+
+thresholds:
+  - name: headless-deny
+    expression: weight >= 1000
+    action: DENY
+  # Put your other thresholds after this one.
+```
+
+Select a score limit that real browsers do not get. To find the scores of real browsers, examine the stored reports and `botstopper_headless_reports_total`.
+
+## Settings
+
+| Flag / environment variable                       | Default | Value                                                                   |
+| :------------------------------------------------ | :------ | :---------------------------------------------------------------------- |
+| `--headless-network-ttl` / `HEADLESS_NETWORK_TTL` | `24h`   | The time that BotStopper keeps the count of hard reports for a network. |
+
+BotStopper keeps each report for the time in `--cookie-expiration-time`.
+
+## Metrics
+
+- `botstopper_headless_reports_total{result}`: The number of reports for each result. The results are `clean`, `soft`, `hard`, `detector_error`, `no_wasm`, and `rejected_<reason>`.
+- `botstopper_headless_signal_hits_total{signal}`: The number of hits for each signal.
+- `botstopper_headless_refusals_total{reason}`: The number of challenges that failed because of the detector. The reasons are `missing` (no report), `assets` (missing or late downloads), `incomplete` (unavailable WASM or a detector error), `hard`, and `error`.
+- `botstopper_headless_fetch_metadata_total{request,result}`: The number of detector requests for each Fetch Metadata result. The requests are `headless.mjs`, `headless_component.core.wasm`, and `report`. The results are `ok`, `missing`, and `wrong`. If many requests have `result="missing"`, a proxy possibly removes the headers.
+- `botstopper_headless_asset_requests_total{file,encoding}`: The number of detector downloads for each file and encoding. If many downloads have `encoding="none"`, clients or a proxy do not send `br`.

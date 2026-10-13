@@ -1,0 +1,32 @@
+# Custom challenge methods
+
+## `soteria`
+
+[Soteria](https://github.com/Xe/soteria) is an obfuscated virtual machine that is designed to be equitable to mobile phones as well as using SIMD to execute four solution programs at once (Single Program, Multiple Dispatch). It dynamically synthesizes programs at runtime similar to RandomX. To use it, create a bot or threshold rule that uses the `soteria` challenge method:
+
+```yaml
+thresholds:
+  # ...
+  - name: moderate-suspicion
+    expression:
+      all:
+        - weight >= 10
+        - weight < 20
+    action: CHALLENGE
+    challenge:
+      algorithm: soteria
+      difficulty: 18
+  # ...
+```
+
+Soteria is currently experimental and has not undergone extensive security review. It is not compatible with browsers that do not support WASM SIMD or have WebAssembly disabled. Eventually this will point to a pool of proof of work implementations like Soteria, but explicitly rotated very often to avoid attackers from writing optimized solvers.
+
+When clients are presented with a challenge, they will be asked to solve four challenge programs at the same time. As such, clients need to submit four solutions in order to get a record of success. Phones have reduced difficulty and solution requirements.
+
+The minimum effective difficulty is 3 for desktop clients and 2 for phones. The phone discount subtracts four bits before this floor applies. Negative difficulty is invalid. These minima prevent unconditional acceptance but require very little work. Use a higher difficulty, such as the example above, for meaningful work.
+
+The duration metric remains client-reported milliseconds. BotStopper rejects negative and non-finite durations and caps observations at 30 minutes. Nonces must use at most ten decimal digits each.
+
+Coordinate replica upgrades that change difficulty floors or headless requirements. Outstanding challenges can require a reload across versions. Existing authorization tokens are not revoked by these changes.
+
+An upcoming blogpost will explain the design of this virtual machine and the tradeoffs at play.

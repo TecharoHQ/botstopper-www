@@ -1,0 +1,189 @@
+# Customization
+
+## Custom images and CSS
+
+Anubis uses an internal filesystem that contains CSS, JavaScript, and images. The BotStopper variant of Anubis lets you specify an overlay folder with the environment variable `OVERLAY_FOLDER`. The contents of this folder will be overlaid on top of Anubis' internal filesystem, allowing you to easily customize the images and CSS.
+
+Only trusted administrators must have write access to the overlay folder. An overlay can replace JavaScript and templates on protected sites. Keep credentials and signing keys outside this folder. Public asset requests return 404 for dotfiles and template source, including symlink aliases. Other files are public.
+
+With `ASSET_LOOKUP_HEADER`, each tenant uses its own folder followed by embedded defaults. Shared files at the overlay root do not participate. Unknown tenants receive embedded assets and built-in pages. A custom dispatch header must come from a trusted ingress when it identifies a tenant. Filesystem isolation does not authenticate that header.
+
+Symlinks must remain inside the selected overlay or tenant folder. Overlay responses use `Cache-Control: private, no-cache`. Custom dispatch headers also appear in `Vary`. Purge existing CDN entries during an upgrade: new headers cannot invalidate an already cached response.
+
+Your directory tree should look like this, assuming your data is in `./your_folder`:
+
+```text
+./your_folder
+└── static
+    ├── css
+    │   └── custom.css
+    └── img
+        ├── happy.webp
+        ├── pensive.webp
+        └── reject.webp
+```
+
+For an example directory tree using some off-the-shelf images the Tango icon set, see the [testdata](../testdata) folder.
+
+### Custom CSS
+
+CSS customization is done mainly with CSS variables. Here is an example that sets Anubis to use a very neutral white-on-black theme:
+
+```css
+:root {
+  /* Font customization
+  */
+  --body-sans-font: sans-serif;
+  --body-preformatted-font: monospace;
+  --body-title-font: serif;
+
+  /* To use the default fonts:
+
+  --body-sans-font: Geist, sans-serif;
+  --body-preformatted-font: Iosevka Curly Iaso, monospace;
+  --body-title-font: Podkova, serif;
+
+  @font-face {
+    font-family: "Geist";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("/.within.website/x/xess/static/geist.woff2") format("woff2");
+  }
+
+  @font-face {
+    font-family: "Podkova";
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url("/.within.website/x/xess/static/podkova.woff2") format("woff2");
+  }
+
+  @font-face {
+    font-family: "Iosevka Curly";
+    font-style: monospace;
+    font-display: swap;
+    src: url("/.within.website/x/xess/static/iosevka-curly.woff2") format("woff2");
+  }
+
+  */
+
+  /* Color customization, these correlate to the locations in `xess.css` in the upstream
+     Anubis repo: https://github.com/TecharoHQ/anubis/blob/main/xess/xess.css
+
+     Experimentation may be required.
+  */
+  --background: #000000;
+  --text: #ffffff;
+  --text-selection: #d3869b;
+  --preformatted-background: #3c3836;
+  --link-foreground: #0000ee;
+  --link-background: inherit;
+  --blockquote-border-left: 1px solid #bdae93;
+
+  /* Customization of the progress bar colors.
+  
+     Experimentation may be required.
+  */
+  --progress-bar-outline: #b16286 solid 4px;
+  --progress-bar-fill: #b16286;
+}
+@media (prefers-color-scheme: light) {
+  /* BotStopper's CSS is responsive to both light and dark mode. Be sure to support both
+     of these in your configuration.
+  */
+  :root {
+    --background: #ffffff;
+    --text: #000000;
+    --text-selection: #d3869b;
+    --preformatted-background: #ebdbb2;
+    --link-foreground: #0000ff;
+    --link-background: inherit;
+    --blockquote-border-left: 1px solid #655c54;
+  }
+}
+```
+
+### Custom fonts
+
+If you want to add custom fonts, copy the `woff2` files alongside your `custom.css` file and then include them with the [`@font-face` CSS at-rule](https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face):
+
+```css
+@font-face {
+  font-family: "Oswald";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("./fonts/oswald.woff2") format("woff2");
+}
+```
+
+Then adjust your CSS variables accordingly:
+
+```css
+:root {
+  --body-sans-font: Oswald, sans-serif;
+  --body-preformatted-font: monospace;
+  --body-title-font: serif;
+}
+```
+
+To convert `.ttf` fonts to [Web-optimized woff2 fonts](https://www.w3.org/TR/WOFF2/), use the `woff2_compress` command from the `woff2` or `woff2-tools` package:
+
+```console
+$ woff2_compress oswald.ttf
+Processing oswald.ttf => oswald.woff2
+Compressed 159517 to 70469.
+```
+
+Then you can import and use it as normal.
+
+### Customizing images
+
+Anubis uses three images to visually communicate the state of the program. These are:
+
+| Image name     | Intended message                                 | Example                             |
+| :------------- | :----------------------------------------------- | :---------------------------------- |
+| `happy.webp`   | You have passed validation, all is good          | ![](../web/static/img/happy.webp)   |
+| `pensive.webp` | Checking is running, hold steady until it's done | ![](../web/static/img/pensive.webp) |
+| `reject.webp`  | Something went wrong, this is a terminal state   | ![](../web/static/img/reject.webp)  |
+
+To make your own images at the optimal quality, use the following ffmpeg command:
+
+```text
+ffmpeg -i /path/to/image -vf scale=-1:384 happy.webp
+```
+
+`ffprobe` should report something like this on the generated images:
+
+```text
+Input #0, webp_pipe, from 'happy.webp':
+  Duration: N/A, bitrate: N/A
+  Stream #0:0: Video: webp, none, 25 fps, 25 tbr, 25 tbn
+```
+
+In testing 384 by 384 pixels gives the best balance between filesize, quality, and clarity.
+
+```text
+$ du -hs *
+4.0K    happy.webp
+ 12K    pensive.webp
+8.0K    reject.webp
+```
+
+## Customizing messages
+
+You can customize messages using the following environment variables:
+
+| Message              | Environment variable | Default                                    |
+| :------------------- | :------------------- | :----------------------------------------- |
+| Challenge page title | `CHALLENGE_TITLE`    | `Ensuring the security of your connection` |
+| Error page title     | `ERROR_TITLE`        | `Error`                                    |
+
+For example:
+
+```sh
+# /etc/techaro-botstopper/gitea.env
+CHALLENGE_TITLE="Wait a moment please!"
+ERROR_TITLE="Client error"
+```

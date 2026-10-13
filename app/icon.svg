@@ -1,0 +1,60 @@
+<svg role="img" aria-label="Logo: two overlapping triangles over an iris" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <polygon id="tri" points="200,70 312.58,265 87.42,265"/>
+
+    <linearGradient id="vibe" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B6AA8"/>
+      <stop offset="45%" stop-color="#A982C2"/>
+      <stop offset="100%" stop-color="#C0A6D4"/>
+    </linearGradient>
+    <linearGradient id="cool" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A28DBA"/>
+      <stop offset="50%" stop-color="#756186"/>
+      <stop offset="100%" stop-color="#554565"/>
+    </linearGradient>
+    <linearGradient id="overlap" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E7DDED"/>
+      <stop offset="50%" stop-color="#D5C4E0"/>
+      <stop offset="100%" stop-color="#B6A0C9"/>
+    </linearGradient>
+
+
+    <mask id="seams" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="400">
+      <rect x="0" y="0" width="400" height="400" fill="#FFFFFF"/>
+      <g fill="none" stroke="#000000" stroke-width="4.5" stroke-linejoin="round">
+        <polygon points="237.46,107.28 295.85,171.48 376.63,260.30 390.11,243.39 357.27,99.50"/>
+        <polygon points="295.85,171.48 282.06,257.15 262.98,375.69 284.61,375.69 376.63,260.30"/>
+        <polygon points="282.06,257.15 206.48,299.79 101.91,358.78 115.39,375.69 262.98,375.69"/>
+        <polygon points="206.48,299.79 126.02,267.28 14.70,222.31 9.89,243.39 101.91,358.78"/>
+        <polygon points="126.02,267.28 101.27,184.11 67.03,69.04 47.54,78.42 14.70,222.31"/>
+        <polygon points="101.27,184.11 150.87,112.90 219.48,14.38 200.00,5.00 67.03,69.04"/>
+        <polygon points="150.87,112.90 237.46,107.28 357.27,99.50 352.46,78.42 219.48,14.38"/>
+      </g>
+    </mask>
+
+    <clipPath id="clipA">
+      <use href="#tri" transform="translate(-22,-18)"/>
+    </clipPath>
+  </defs>
+
+  <g transform="rotate(12 200 200)">
+    <!-- Iris blades: no outline; the heptagon is implied by their outer edges -->
+    <g mask="url(#seams)">
+      <polygon points="237.46,107.28 295.85,171.48 376.63,260.30 390.11,243.39 357.27,99.50" fill="#302A38"/>
+      <polygon points="295.85,171.48 282.06,257.15 262.98,375.69 284.61,375.69 376.63,260.30" fill="#37313F"/>
+      <polygon points="282.06,257.15 206.48,299.79 101.91,358.78 115.39,375.69 262.98,375.69" fill="#403848"/>
+      <polygon points="206.48,299.79 126.02,267.28 14.70,222.31 9.89,243.39 101.91,358.78" fill="#302A38"/>
+      <polygon points="126.02,267.28 101.27,184.11 67.03,69.04 47.54,78.42 14.70,222.31" fill="#494052"/>
+      <polygon points="101.27,184.11 150.87,112.90 219.48,14.38 200.00,5.00 67.03,69.04" fill="#37313F"/>
+      <polygon points="150.87,112.90 237.46,107.28 357.27,99.50 352.46,78.42 219.48,14.38" fill="#403848"/>
+    </g>
+
+    <!-- Triangles, on top -->
+    <use href="#tri" transform="translate(-22,-18)" fill="url(#vibe)"/>
+    <use href="#tri" transform="translate(22,18)" fill="url(#cool)"/>
+    <g clip-path="url(#clipA)">
+      <use href="#tri" transform="translate(22,18)" fill="url(#overlap)"/>
+    </g>
+  </g>
+
+</svg>
