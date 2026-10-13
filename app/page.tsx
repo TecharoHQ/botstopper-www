@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
+import ApertureModel from "./aperture-model";
 
 const features = [
   {
@@ -139,7 +140,10 @@ export default function Home() {
 
         <section className="intro-section section-pad">
           <div className="container intro-grid">
-            <p className="eyebrow">THE BOTSTOPPER APPROACH</p>
+            <div className="intro-visual">
+              <p className="eyebrow">THE BOTSTOPPER APPROACH</p>
+              <ApertureModel />
+            </div>
             <div>
               <h2>Keep your front door open.<br /><span>Keep the bots guessing.</span></h2>
               <p className="section-lede">BotStopper brings the practical, open source approach of Anubis to teams that need a polished way to manage scraping and automated traffic.</p>
