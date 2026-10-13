@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
+import createMDX from "@next/mdx";
+
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: ["remark-frontmatter", "remark-gfm"],
+  },
+});
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  outputFileTracingIncludes: {
+    "/docs/**": ["./content/docs/**/*.mdx"],
+    "/social/docs/**": ["./content/docs/**/*.mdx"],
+    "/md/**": ["./content/**/*.md", "./content/docs/**/*.mdx"],
+    "/llms.txt": ["./content/docs/**/*.mdx"],
+  },
   async headers() {
     // RFC 8288: advertise the sitemap and the markdown twin of each page.
     // (Vary: Accept on HTML responses is not set here because Next.js
@@ -41,4 +54,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withMDX(nextConfig);
