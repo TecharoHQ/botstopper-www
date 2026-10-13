@@ -10,6 +10,7 @@ const features = [
     description:
       "Built by the same team behind Anubis, BotStopper brings its practical approach to automated traffic into a product designed for organizations.",
     icon: "↗",
+    href: "/docs/anubis",
   },
   {
     number: "02",
@@ -17,6 +18,7 @@ const features = [
     description:
       "Start with a corporate-friendly default experience, then tailor the challenge and presentation to match your organization.",
     icon: "◇",
+    href: "/docs/customization",
   },
   {
     number: "03",
@@ -24,6 +26,7 @@ const features = [
     description:
       "Identify browser automation signals and apply friction where it helps protect your site and its resources.",
     icon: "⌘",
+    href: "/docs/extensions/headless",
   },
   {
     number: "04",
@@ -31,6 +34,7 @@ const features = [
     description:
       "Combine signals and challenges to distinguish useful visitors from unwanted automated traffic with a flexible flow.",
     icon: "⤢",
+    href: "/docs/challenges/soteria",
   },
 ];
 
@@ -151,12 +155,12 @@ export default function Home() {
             </div>
             <div className="feature-grid">
               {features.map((feature) => (
-                <article className="feature-card" key={feature.number}>
+                <Link className="feature-card" key={feature.number} href={feature.href}>
                   <div className="feature-top"><span>{feature.number} / 04</span><span className="feature-icon" aria-hidden="true">{feature.icon}</span></div>
                   <h3>{feature.title}</h3>
                   <p>{feature.description}</p>
                   <span className="feature-arrow" aria-hidden="true">↗</span>
-                </article>
+                </Link>
               ))}
             </div>
           </div>

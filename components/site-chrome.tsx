@@ -26,12 +26,20 @@ export function SiteHeader({ variant = "page" }: { variant?: HeaderVariant }) {
             <a href="#platform">Platform</a>
             <a href="#features">Features</a>
             <Link href="/docs">Documentation</Link>
+            <Link href="/pricing">Pricing</Link>
+            <Link href="/about">About</Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/privacy">Privacy</Link>
           </nav>
         ) : (
           <nav className={isDocs ? undefined : "main-nav"} aria-label="Main navigation">
             <Link href="/#platform">Platform</Link>
             <Link href="/#features">Features</Link>
             <Link href="/docs" className={isDocs ? "active" : undefined}>Documentation</Link>
+            <Link href="/pricing">Pricing</Link>
+            <Link href="/about">About</Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/privacy">Privacy</Link>
           </nav>
         )}
         <a className="header-cta" href="http://github.com/sponsors/Xe" target="_blank" rel="noreferrer">

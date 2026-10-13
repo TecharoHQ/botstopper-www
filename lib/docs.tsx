@@ -108,14 +108,16 @@ export function Markdown({ source }: { source: string }) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          a: ({ href, children, ...props }) => {
+          // react-markdown passes the hast node as a prop; keep it out of
+          // the DOM attributes.
+          a: ({ href, children, node, ...props }) => {
             const external = /^https?:/i.test(href ?? "");
             // Relative links to the .md twins point agents at the markdown
             // source; humans clicking through the rendered page get HTML.
             const resolved = !external && href?.endsWith(".md") ? href.slice(0, -3) : href;
             return <a href={resolved} {...props} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>{children}</a>;
           },
-          table: ({ children, ...props }) => <div className="markdown-table-scroll" tabIndex={0} role="region" aria-label="Scrollable table"><table {...props}>{children}</table></div>,
+          table: ({ children, node, ...props }) => <div className="markdown-table-scroll" tabIndex={0} role="region" aria-label="Scrollable table"><table {...props}>{children}</table></div>,
         }}
       >
         {source}

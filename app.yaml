@@ -8,6 +8,11 @@ spec:
   autoUpdate: true
   replicas: 1
 
+  volumes:
+    - name: route-cache
+      path: /app/.next/server/route-cache
+      size: 1Gi
+
   ingress:
     enabled: true
     host: botstopper.net

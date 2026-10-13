@@ -44,4 +44,4 @@ Then attach it to your Deployment:
 +      - name: techarohq-botstopper
 ```
 
-Next, read [configuration](configuration) for the Docker Compose options and example.
+Next, read [configuration](/docs/configuration.md) for the Docker Compose options and example.

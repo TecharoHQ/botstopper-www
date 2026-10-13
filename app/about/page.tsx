@@ -6,7 +6,7 @@ import { getMarkdownPage } from "@/lib/markdown-pages";
 export const metadata: Metadata = {
   title: "About | BotStopper from Techaro",
   description:
-    "BotStopper is made by Techaro, the team behind Anubis. Open source roots, calmer defaults, and documentation a team can deploy from.",
+    "BotStopper is made by Techaro, the team behind Anubis. CEL policy filters, headless browser detection, the Soteria challenge, and deployment packaging for organizations.",
   alternates: {
     canonical: "/about",
     types: { "text/markdown": "/about.md" },

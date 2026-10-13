@@ -36,5 +36,5 @@ And then open [https://botstopper.local.cetacean.club:8443](https://botstopper.l
 
 NOTE: This uses locally signed sacrificial TLS certificates stored in `./demo/pki`. Your browser will rightly reject these. Here is what the example looks like:
 
-See [customization](customization.md) for overlay folders and message titles.
-See [headless browser detection](headless-browser-detection.md) and [custom challenge methods](challenge-methods.md) for challenge configuration.
+See [customization](/docs/customization.md) for overlay folders and message titles.
+See [headless browser detection](/docs/extensions/headless.md) and [the Soteria challenge](/docs/challenges/soteria.md) for challenge configuration.
