@@ -38,6 +38,10 @@ COPY --from=builder /app/public /app/public
 # to have picked up every markdown file.
 COPY --from=builder /app/content /app/content
 
+# Keep the route cache writable and local to each container.
+RUN mkdir -p /app/.next/server/route-cache \
+    && chmod 1777 /app/.next/server/route-cache
+
 # Expose port
 EXPOSE 3000
 
