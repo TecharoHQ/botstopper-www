@@ -22,9 +22,11 @@ const schibsted = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://botstopper.net"),
   title: "BotStopper from Techaro | A smarter front door for the web",
   description:
     "BotStopper from Techaro helps protect websites from scraping and automated abuse while keeping the experience straightforward for people.",
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

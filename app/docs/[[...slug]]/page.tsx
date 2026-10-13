@@ -1,9 +1,29 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getDoc, getDocParams, getDocs, Markdown } from "@/lib/docs";
+import { socialImageSize } from "@/lib/social-image";
 
 export function generateStaticParams() {
   return getDocParams();
+}
+
+export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]">): Promise<Metadata> {
+  const { slug = [] } = await params;
+  const doc = getDoc(slug);
+  const title = `${doc.title} | BotStopper documentation`;
+  const image = {
+    url: `/social/docs${doc.slug ? `/${doc.slug}` : ""}`,
+    ...socialImageSize,
+    alt: `${doc.title} - BotStopper from Techaro`,
+    type: "image/png",
+  };
+
+  return {
+    title,
+    openGraph: { title, images: [image] },
+    twitter: { card: "summary_large_image", title, images: [image] },
+  };
 }
 
 export default function DocsPage({ params }: PageProps<"/docs/[[...slug]]">) {

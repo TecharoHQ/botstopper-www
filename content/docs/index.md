@@ -9,4 +9,3 @@ These guides describe the additions and changes in BotStopper.
 - [Headless browser detection](headless-browser-detection.md): detector configuration, client hints, Fetch Metadata, policies, metrics, and limits.
 - [Custom challenge methods](challenge-methods.md): Soteria configuration and browser requirements.
 - [Proxy and service upgrades](upgrades.md): TLS connection pools and systemd instance paths.
-- [Anubis rebase runbook](runbooks/anubis-rebase.md): the procedure for an upstream rebase.

@@ -4,7 +4,7 @@ metadata:
   name: botstopper-marketing
 
 spec:
-  image: ghcr.io/techarohq/site:latest
+  image: ghcr.io/techarohq/botstopper-www:latest
   autoUpdate: true
   replicas: 1
 
