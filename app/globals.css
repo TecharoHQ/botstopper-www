@@ -222,6 +222,30 @@ h1, h2, h3, h4, h5 { font-family: var(--font-heading), Georgia, serif; }
 .markdown-content .contains-task-list { padding-left: 0; list-style: none; }
 .markdown-content .task-list-item input { margin-right: 8px; accent-color: var(--accent); }
 .markdown-content hr { height: 1px; margin: 35px 0; border: 0; background: #e5dfe8; }
+
+.anubis-request-flow { margin: 34px 0 42px; padding: 23px 22px 19px; border: 1px solid #e2dbe8; background: linear-gradient(135deg, #faf8fb, #f1edf4); color: #403749; }
+.anubis-request-flow figcaption { max-width: 560px; margin: 0 auto 6px; color: #594b66; font: 600 17px/1.35 var(--font-heading), Georgia, serif; text-align: center; }
+.anubis-flow-visual { position: relative; min-height: 218px; }
+.anubis-flow-scene { position: absolute; z-index: 0; inset: 0; overflow: hidden; }
+.anubis-flow-scene canvas { display: block; width: 100%; height: 100%; }
+.anubis-flow-stages { position: relative; z-index: 1; display: grid; min-height: 218px; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.markdown-content .anubis-flow-stages { margin: 0; padding: 0; }
+.anubis-flow-stage { display: flex; min-height: 89px; flex-direction: column; align-items: center; justify-content: center; padding: 12px 8px; border: 1px solid rgba(213, 203, 222, .9); background: rgba(255, 255, 255, .82); text-align: center; }
+.markdown-content li.anubis-flow-stage { margin: 0; padding: 12px 8px; }
+.anubis-flow-stage:not(:last-child)::after { position: absolute; right: -11px; color: #917ba3; content: "→"; font-size: 17px; }
+.anubis-flow-stage { position: relative; }
+.anubis-flow-stage strong { color: #44384f; font-size: 12px; line-height: 1.3; }
+.anubis-flow-stage small { display: block; color: #756b7e; font-size: 9px; font-weight: 500; line-height: 1.4; }
+.anubis-flow-kicker { margin-bottom: 7px; color: #8a7897; font-size: 7px; font-weight: 700; letter-spacing: .1em; }
+.anubis-flow-gate { border-color: #bba9ca; background: rgba(239, 232, 244, .58); }
+.anubis-flow-gate strong { font: 600 19px/1.1 var(--font-heading), Georgia, serif; }
+.anubis-flow-outcomes { display: flex; justify-content: space-between; gap: 12px; margin: 0 10px; font-size: 9px; font-weight: 700; letter-spacing: .04em; }
+.anubis-flow-blocked { color: #a63f39; }
+.anubis-flow-blocked b { display: inline-grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; background: #c7463e; color: white; font-size: 12px; }
+.anubis-flow-allowed { color: #675675; }
+.anubis-flow-description { margin: 13px 0 0 !important; color: #766c7d; font-size: 10px; line-height: 1.55; text-align: center; }
+.anubis-flow-scene:not([data-loaded="true"]) { visibility: hidden; }
+
 .docs-article-footer { display: flex; justify-content: space-between; gap: 18px; margin-top: 58px; padding-top: 20px; border-top: 1px solid #e5dfe8; }
 .docs-article-footer a { display: grid; gap: 7px; color: #59456a; text-decoration: none; }
 .docs-article-footer small { color: #94889d; font-size: 8px; font-weight: 700; letter-spacing: .14em; }
@@ -298,6 +322,13 @@ h1, h2, h3, h4, h5 { font-family: var(--font-heading), Georgia, serif; }
   .markdown-content { font-size: 13px; }
   .markdown-content > h1 { font-size: 43px; }
   .markdown-content > h2 { margin-top: 35px; font-size: 27px; }
+  .anubis-request-flow { margin: 28px 0 35px; padding: 18px 15px; }
+  .anubis-flow-visual, .anubis-flow-stages { min-height: 0; }
+  .anubis-flow-scene { display: none; }
+  .anubis-flow-stages { grid-template-columns: 1fr; gap: 7px; }
+  .anubis-flow-stage { min-height: 60px; }
+  .anubis-flow-stage:not(:last-child)::after { top: auto; right: calc(50% - 6px); bottom: -15px; z-index: 2; content: "↓"; }
+  .anubis-flow-outcomes { flex-wrap: wrap; justify-content: center; margin-top: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
