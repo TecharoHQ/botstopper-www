@@ -53,8 +53,8 @@ export default function ApertureModel() {
       };
       const handlePointerMove = (event: PointerEvent) => {
         const bounds = container.getBoundingClientRect();
-        targetYaw = ((event.clientX - bounds.left) / bounds.width - 0.5) * 0.36;
-        targetPitch = ((event.clientY - bounds.top) / bounds.height - 0.5) * -0.24;
+        targetYaw = ((event.clientX - bounds.left) / bounds.width - 0.5) * 0.58;
+        targetPitch = ((event.clientY - bounds.top) / bounds.height - 0.5) * -0.42;
         if (motion.matches) {
           pitch = targetPitch;
           yaw = targetYaw;
