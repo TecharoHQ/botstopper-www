@@ -1,7 +1,5 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { notFound } from "next/navigation";
 
 const docsRoot = path.join(process.cwd(), "content", "docs");
@@ -9,7 +7,7 @@ const docsRoot = path.join(process.cwd(), "content", "docs");
 export type DocPage = {
   slug: string;
   title: string;
-  content: string;
+  file: string;
 };
 
 export type DocNavItem = {
@@ -21,7 +19,7 @@ export type DocNavItem = {
 
 function titleFromFilename(filename: string) {
   return filename
-    .replace(/\.md$/i, "")
+    .replace(/\.mdx$/i, "")
     .replace(/[-_]+/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
@@ -36,21 +34,21 @@ function readDoc(filePath: string, slug: string): DocPage {
   return {
     slug,
     title,
-    content: frontmatter ? source.slice(frontmatter[0].length) : source,
+    file: path.relative(docsRoot, filePath).replace(/\.mdx$/i, "").split(path.sep).join("/"),
   };
 }
 
-function collectDocs(directory = docsRoot, parentSlug = ""): DocPage[] {
-  return readdirSync(directory, { withFileTypes: true })
+function collectDocs(directory = "", parentSlug = ""): DocPage[] {
+  return readdirSync(path.join(docsRoot, directory), { withFileTypes: true })
     .sort((a, b) => a.name.localeCompare(b.name, "en"))
     .flatMap((entry) => {
-      const entryPath = path.join(directory, entry.name);
+      const entryPath = path.join(docsRoot, directory, entry.name);
       if (entry.isDirectory()) {
-        return collectDocs(entryPath, parentSlug ? `${parentSlug}/${entry.name}` : entry.name);
+        return collectDocs(path.join(directory, entry.name), parentSlug ? `${parentSlug}/${entry.name}` : entry.name);
       }
-      if (!entry.isFile() || !entry.name.toLowerCase().endsWith(".md")) return [];
+      if (!entry.isFile() || !entry.name.endsWith(".mdx")) return [];
 
-      const basename = entry.name.replace(/\.md$/i, "");
+      const basename = entry.name.replace(/\.mdx$/i, "");
       const slug = basename === "index" ? parentSlug : parentSlug ? `${parentSlug}/${basename}` : basename;
       return [readDoc(entryPath, slug)];
     });
@@ -100,23 +98,4 @@ export function getDoc(slug: string[]) {
 
 export function getDocParams() {
   return getDocs().map((doc) => ({ slug: doc.slug ? doc.slug.split("/") : [] }));
-}
-
-export function Markdown({ source }: { source: string }) {
-  return (
-    <div className="markdown-content">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          a: ({ href, children, ...props }) => {
-            const external = /^https?:/i.test(href ?? "");
-            return <a href={href} {...props} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>{children}</a>;
-          },
-          table: ({ children, ...props }) => <div className="markdown-table-scroll" tabIndex={0} role="region" aria-label="Scrollable table"><table {...props}>{children}</table></div>,
-        }}
-      >
-        {source}
-      </ReactMarkdown>
-    </div>
-  );
 }

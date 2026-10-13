@@ -199,6 +199,12 @@ h1, h2, h3, h4, h5 { font-family: var(--font-heading), Georgia, serif; }
 .markdown-content code { padding: 2px 5px; border: 1px solid #e6e0e9; background: #f3f0f5; color: #594568; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .86em; }
 .markdown-content pre { position: relative; overflow-x: auto; margin: 22px 0 27px; padding: 20px 22px; border: 1px solid #40334d; background: #2d2535; color: #eee8f3; line-height: 1.65; }
 .markdown-content pre code { padding: 0; border: 0; background: transparent; color: inherit; font-size: 12px; }
+.docs-code-block { position: relative; }
+.docs-code-block pre { padding-top: 48px; }
+.docs-copy-code { position: absolute; top: 10px; right: 10px; z-index: 1; padding: 4px 10px; border: 1px solid #796987; background: #40334d; color: #eee8f3; font: inherit; font-size: 12px; cursor: pointer; }
+.docs-copy-code:hover { background: #594568; }
+.docs-copy-code:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.docs-copy-status:empty { display: none; }
 .markdown-table-scroll { max-width: 100%; overflow-x: auto; margin: 24px 0; }
 .markdown-content table { width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.6; }
 .markdown-content th, .markdown-content td { padding: 12px 14px; border: 1px solid var(--line); vertical-align: top; }

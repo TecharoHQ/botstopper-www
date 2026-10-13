@@ -1,7 +1,18 @@
 import type { NextConfig } from "next";
+import createMDX from "@next/mdx";
+
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: ["remark-frontmatter", "remark-gfm"],
+  },
+});
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  outputFileTracingIncludes: {
+    "/docs/**": ["./content/docs/**/*.mdx"],
+    "/social/docs/**": ["./content/docs/**/*.mdx"],
+  },
   redirects() {
     return [
       {
@@ -27,4 +38,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withMDX(nextConfig);
