@@ -53,8 +53,8 @@ export default function ApertureModel() {
       };
       const handlePointerMove = (event: PointerEvent) => {
         const bounds = container.getBoundingClientRect();
-        targetYaw = ((event.clientX - bounds.left) / bounds.width - 0.5) * 0.58;
-        targetPitch = ((event.clientY - bounds.top) / bounds.height - 0.5) * -0.42;
+        targetYaw = ((event.clientX - bounds.left) / bounds.width - 0.5) * 1.2;
+        targetPitch = ((event.clientY - bounds.top) / bounds.height - 0.5) * -0.95;
         if (motion.matches) {
           pitch = targetPitch;
           yaw = targetYaw;
@@ -78,8 +78,8 @@ export default function ApertureModel() {
           mixer?.update(Math.min((time - previousTime) / 1000, 0.1));
         }
         previousTime = time;
-        pitch += (targetPitch - pitch) * 0.08;
-        yaw += (targetYaw - yaw) * 0.08;
+        pitch += (targetPitch - pitch) * 0.2;
+        yaw += (targetYaw - yaw) * 0.2;
         applyTilt();
         render();
       };
