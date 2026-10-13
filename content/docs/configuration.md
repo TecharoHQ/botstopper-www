@@ -26,7 +26,7 @@ Use [the upstream Docker compose directions](https://anubis.techaro.lol/docs/adm
 
 ### Example
 
-There is an example in [docker-compose.yaml](../docker-compose.yaml). Start the example with `docker compose up`:
+There is an example in [docker-compose.yaml](https://github.com/TecharoHQ/botstopper/blob/main/docker-compose.yaml). The repository is currently private, so that link works for team members. Start the example with `docker compose up`:
 
 ```text
 docker compose up -d

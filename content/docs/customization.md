@@ -23,7 +23,7 @@ Your directory tree should look like this, assuming your data is in `./your_fold
         └── reject.webp
 ```
 
-For an example directory tree using some off-the-shelf images the Tango icon set, see the [testdata](../testdata) folder.
+For an example directory tree using some off-the-shelf images the Tango icon set, see the [testdata](https://github.com/TecharoHQ/botstopper/tree/main/testdata) folder. The repository is currently private, so that link works for team members.
 
 ### Custom CSS
 
@@ -142,11 +142,11 @@ Then you can import and use it as normal.
 
 Anubis uses three images to visually communicate the state of the program. These are:
 
-| Image name     | Intended message                                 | Example                             |
-| :------------- | :----------------------------------------------- | :---------------------------------- |
-| `happy.webp`   | You have passed validation, all is good          | ![](../web/static/img/happy.webp)   |
-| `pensive.webp` | Checking is running, hold steady until it's done | ![](../web/static/img/pensive.webp) |
-| `reject.webp`  | Something went wrong, this is a terminal state   | ![](../web/static/img/reject.webp)  |
+| Image name     | Intended message                                 | Example                    |
+| :------------- | :----------------------------------------------- | :------------------------- |
+| `happy.webp`   | You have passed validation, all is good          | ![](/img/happy.webp)   |
+| `pensive.webp` | Checking is running, hold steady until it's done | ![](/img/pensive.webp) |
+| `reject.webp`  | Something went wrong, this is a terminal state   | ![](/img/reject.webp)  |
 
 To make your own images at the optimal quality, use the following ffmpeg command:
 

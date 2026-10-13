@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
+import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 
 const features = [
   {
@@ -32,40 +34,65 @@ const features = [
   },
 ];
 
-function Brand({ inverse = false }: { inverse?: boolean }) {
-  return (
-    <Link className={`brand${inverse ? " brand-inverse" : ""}`} href="/" aria-label="BotStopper from Techaro home">
-      <Image src="/botstopper-mark.svg" alt="" width={44} height={44} priority />
-      <span className="brand-copy">
-        <strong>BotStopper</strong>
-        <small>from Techaro</small>
-      </span>
-    </Link>
-  );
-}
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://botstopper.net/#organization",
+      name: "Techaro",
+      url: "https://botstopper.net",
+      logo: "https://botstopper.net/botstopper-mark.svg",
+      sameAs: ["https://github.com/TecharoHQ"],
+      contactPoint: [
+        {
+          "@type": "ContactPoint",
+          contactType: "customer support",
+          email: "me@xeiaso.net",
+        },
+      ],
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "BotStopper",
+      url: "https://botstopper.net",
+      description:
+        "Bot protection built by the creators of Anubis. Helps protect websites from scraping and automated abuse while keeping the experience straightforward for people.",
+      applicationCategory: "SecurityApplication",
+      operatingSystem: "Linux",
+      offers: {
+        "@type": "Offer",
+        price: "50",
+        priceCurrency: "USD",
+      },
+      publisher: { "@id": "https://botstopper.net/#organization" },
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://botstopper.net/#website",
+      name: "BotStopper",
+      url: "https://botstopper.net",
+      publisher: { "@id": "https://botstopper.net/#organization" },
+    },
+  ],
+};
 
-function Header() {
-  return (
-    <header className="site-header">
-      <div className="container header-inner">
-        <Brand />
-        <nav className="main-nav" aria-label="Main navigation">
-          <a href="#platform">Platform</a>
-          <a href="#features">Features</a>
-          <Link href="/docs">Documentation</Link>
-        </nav>
-        <a className="header-cta" href="http://github.com/sponsors/Xe" target="_blank" rel="noreferrer">
-          Support the project <span aria-hidden="true">↗</span>
-        </a>
-      </div>
-    </header>
-  );
-}
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+    types: { "text/markdown": "/index.md" },
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "BotStopper from Techaro",
+  },
+};
 
 export default function Home() {
   return (
     <>
-      <Header />
+      <SiteHeader variant="home" />
       <main>
         <section className="hero" id="platform">
           <div className="hero-glow" aria-hidden="true" />
@@ -167,9 +194,8 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <footer className="site-footer">
-        <div className="container footer-inner"><Brand inverse /><p>Protecting the places people come to on the internet.</p><div className="footer-links"><Link href="/docs">Documentation</Link><a href="http://github.com/sponsors/Xe" target="_blank" rel="noreferrer">GitHub Sponsors ↗</a></div><small>© Techaro. BotStopper from Techaro.</small></div>
-      </footer>
+      <SiteFooter />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
     </>
   );
 }

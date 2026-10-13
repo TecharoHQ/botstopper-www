@@ -110,7 +110,10 @@ export function Markdown({ source }: { source: string }) {
         components={{
           a: ({ href, children, ...props }) => {
             const external = /^https?:/i.test(href ?? "");
-            return <a href={href} {...props} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>{children}</a>;
+            // Relative links to the .md twins point agents at the markdown
+            // source; humans clicking through the rendered page get HTML.
+            const resolved = !external && href?.endsWith(".md") ? href.slice(0, -3) : href;
+            return <a href={resolved} {...props} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>{children}</a>;
           },
           table: ({ children, ...props }) => <div className="markdown-table-scroll" tabIndex={0} role="region" aria-label="Scrollable table"><table {...props}>{children}</table></div>,
         }}

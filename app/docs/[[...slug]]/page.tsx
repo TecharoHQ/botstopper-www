@@ -21,6 +21,10 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 
   return {
     title,
+    alternates: {
+      canonical: doc.slug ? `/docs/${doc.slug}` : "/docs",
+      types: { "text/markdown": doc.slug ? `/docs/${doc.slug}.md` : "/docs.md" },
+    },
     openGraph: { title, images: [image] },
     twitter: { card: "summary_large_image", title, images: [image] },
   };

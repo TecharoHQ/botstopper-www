@@ -34,6 +34,9 @@ ENV PORT="3000"
 COPY --from=builder /app/.next/standalone /app
 COPY --from=builder /app/.next/static /app/.next/static
 COPY --from=builder /app/public /app/public
+# Content is read from disk at runtime; do not rely on output file tracing
+# to have picked up every markdown file.
+COPY --from=builder /app/content /app/content
 
 # Expose port
 EXPOSE 3000

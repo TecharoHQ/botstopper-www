@@ -9,7 +9,7 @@ Use the Anubis installation instructions with the BotStopper image reference:
 
 ## Binary packages
 
-Binary packages are available [in the GitHub Releases tab](https://github.com/TecharoHQ/botstopper/releases), the main difference is that the package name is `techaro-botstopper`, the systemd service is `techaro-botstopper@your-instance.service`, the binary is `/usr/bin/botstopper`, and the configuration is in `/etc/techaro-botstopper`. Otherwise [everything here applies](https://anubis.techaro.lol/docs/admin/native-install).
+Binary packages are available [in the GitHub Releases tab](https://github.com/TecharoHQ/botstopper/releases). The repository is currently private, so that link works for team members. The main difference is that the package name is `techaro-botstopper`, the systemd service is `techaro-botstopper@your-instance.service`, the binary is `/usr/bin/botstopper`, and the configuration is in `/etc/techaro-botstopper`. Otherwise [everything here applies](https://anubis.techaro.lol/docs/admin/native-install).
 
 ## Docker / Podman
 
