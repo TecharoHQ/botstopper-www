@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BotStopper website
 
-## Getting Started
+The marketing site and documentation for BotStopper from Techaro, built by the people behind Anubis. BotStopper helps protect websites from scraping and automated abuse. This repository contains the website that explains the product and publishes its documentation.
 
-First, run the development server:
+This site is vibe coded as a stylistic choice. Soulless corporate drones balk at the idea of anything containing soul, personality, or whimsy. Consider this README fair warning.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Local development
+
+Use Node.js and pnpm. The project pins its pnpm version in `package.json`.
+
+Install the dependencies:
+
+```sh
+pnpm install --frozen-lockfile
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run the development server:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```sh
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open <http://localhost:3000> for the homepage or <http://localhost:3000/docs> for the documentation.
 
-## Learn More
+## Documentation
 
-To learn more about Next.js, take a look at the following resources:
+Add or edit Markdown files in `content/docs/`. The site generates documentation routes and navigation from those files. `index.md` maps to `/docs`, and `installation.md` maps to `/docs/installation`. Nested directories become nested routes.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Page titles come from a `title` field in YAML frontmatter, the first level-one heading, or the filename, in that order. The renderer supports GitHub Flavored Markdown, including tables.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The BotStopper guides describe its additions and changes. The [upstream Anubis documentation](https://anubis.techaro.lol/docs) covers shared features.
 
-## Deploy on Vercel
+## Checks and production
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Run lint checks:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```sh
+pnpm lint
+```
+
+Build the site:
+
+```sh
+pnpm build
+```
+
+Run the production server after a successful build:
+
+```sh
+pnpm start
+```
+
+Next.js is configured to produce standalone output for deployment.

@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile converted from Earthfile
 
 # Build stage
-FROM node:alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -9,26 +9,26 @@ ARG NODE_ENV="production"
 ENV NODE_ENV=${NODE_ENV}
 
 # Copy package files first for better layer caching
-COPY package-lock.json package.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install all dependencies (including dev dependencies for build)
-RUN npm ci --include=dev
+RUN npm install --global pnpm@11.22.0 \
+    && pnpm install --frozen-lockfile --prod=false
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN npm run build
-
-# Remove dev dependencies to reduce size
-RUN npm prune --omit=dev
+RUN pnpm build
 
 # Runtime stage
-FROM node:alpine AS runtime
+FROM node:24-alpine AS runtime
 
 WORKDIR /app
 
 ENV NODE_ENV="production"
+ENV HOSTNAME="0.0.0.0"
+ENV PORT="3000"
 
 # Copy built application from builder stage
 COPY --from=builder /app/.next/standalone /app
