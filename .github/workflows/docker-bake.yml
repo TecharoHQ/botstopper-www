@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: techarohq/site
+  IMAGE_NAME: techarohq/botstopper-www
 
 jobs:
   bake:
