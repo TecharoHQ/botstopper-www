@@ -1,0 +1,69 @@
+# What is Anubis?
+
+Anubis is the open source project BotStopper is built on. It is a Web AI
+Firewall Utility that sits in front of a website and weighs the soul of
+each connection with a challenge, so that people get through and scraper
+bots do not. This page summarizes what Anubis does based on the
+[upstream documentation](https://anubis.techaro.lol/docs).
+
+Anubis exists because of the endless storm of requests from AI company
+scrapers. It is designed to be lightweight enough that anyone can afford
+to protect the communities closest to them, without routing their
+traffic through a service like Cloudflare.
+
+## The proof-of-work challenge
+
+Anubis's main test is a proof-of-work challenge inspired by Hashcash.
+The server hands the browser a challenge string and a difficulty, and
+the browser has to find a number (a nonce) such that the SHA-256 hash of
+the challenge plus the nonce starts with the required number of zeroes
+(five by default):
+
+```
+hash = sha256(challenge + nonce)
+```
+
+One hash is cheap for a person's browser and easy for the server to
+verify, but doing it at scraper scale costs real CPU time. That
+asymmetry is the point.
+
+When a client passes, Anubis sets a cookie containing a signed JWT so
+returning visitors are not challenged again on every request.
+
+## What gets challenged
+
+By default, Anubis challenges anything that looks like a browser: any
+user agent containing `Mozilla`. Requests to `/.well-known`,
+`/robots.txt`, `/favicon.ico`, and RSS or Atom feeds are left alone, so
+git clients, feed readers, and other low-harm tools get through.
+
+## Policies
+
+Anubis is configured with a policy file: a YAML or JSON list of rules
+that choose `ALLOW`, `DENY`, or `CHALLENGE` for each request based on
+the request path, user agent string, or header values. The defaults keep
+common infrastructure paths reachable and challenge generic browsers.
+Requests that match no rule are allowed through, and well-behaved bots
+such as the Internet Archive can be allowlisted explicitly.
+
+`DENY` responses return an error page that looks like a successfully
+loaded page to most scrapers.
+
+## Tradeoffs
+
+Anubis describes itself as a bit of a nuclear response. It will block
+smaller scrapers and can get in the way of good bots unless you allowlist
+them. For many sites a service like Cloudflare is enough; Anubis is for
+when you cannot or will not use one.
+
+## What BotStopper adds
+
+BotStopper is built by the same team and brings the Anubis approach into
+a product with organizational polish:
+
+- [Installation](/docs/installation.md): binary packages, Docker, Podman, and Kubernetes.
+- [Configuration](/docs/configuration.md): Docker Compose options and the local example.
+- [Customization](/docs/customization.md): overlay folders, CSS, fonts, images, and message titles.
+- [Headless browser detection](/docs/extensions/headless.md): detector configuration, client hints, Fetch Metadata, policies, metrics, and limits.
+- [Soteria challenge](/docs/challenges/soteria.md): the obfuscated virtual machine challenge and its browser requirements.
+- [Proxy and service upgrades](/docs/upgrades.md): TLS connection pools and systemd instance paths.

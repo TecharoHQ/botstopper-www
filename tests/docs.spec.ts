@@ -36,3 +36,26 @@ test("clipboard errors offer a manual fallback", async ({ page }) => {
     "Could not copy. Select the code and copy it manually.",
   );
 });
+
+test("nested MDX guides retain their Markdown endpoints and agent indexes", async ({ page, request }) => {
+  for (const [slug, title] of [["anubis", "What is Anubis?"], ["challenges/soteria", "Soteria"], ["extensions/headless", "Headless browser detection"]]) {
+    await page.goto("/docs");
+    await page.locator(`.markdown-content a[href="/docs/${slug}"]`).click();
+    await expect(page).toHaveURL(`/docs/${slug}`);
+    await expect(page.locator(".markdown-content > h1")).toHaveText(title);
+
+    const source = await request.get(`/docs/${slug}.md`);
+    expect(source.status()).toBe(200);
+    expect(source.headers()["content-type"]).toContain("text/markdown");
+    expect(await source.text()).toContain(`# ${title}`);
+    const negotiated = await request.get(`/docs/${slug}`, { headers: { Accept: "text/markdown" } });
+    expect(await negotiated.text()).toBe(await source.text());
+  }
+  const index = await request.get("/docs/llms.txt");
+  expect(index.status()).toBe(200);
+  expect(await index.text()).toContain("/docs/challenges/soteria.md");
+  for (const name of ["about", "contact", "pricing", "privacy"]) {
+    await page.goto(`/${name}`);
+    await expect(page.locator(".markdown-content > h1")).toBeVisible();
+  }
+});

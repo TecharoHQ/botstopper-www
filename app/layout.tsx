@@ -26,6 +26,10 @@ export const metadata: Metadata = {
   title: "BotStopper from Techaro | A smarter front door for the web",
   description:
     "BotStopper from Techaro helps protect websites from scraping and automated abuse while keeping the experience straightforward for people.",
+  openGraph: {
+    siteName: "BotStopper from Techaro",
+    type: "website",
+  },
   twitter: { card: "summary_large_image" },
 };
 

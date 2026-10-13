@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
+import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 
 const features = [
   {
@@ -8,6 +10,7 @@ const features = [
     description:
       "Built by the same team behind Anubis, BotStopper brings its practical approach to automated traffic into a product designed for organizations.",
     icon: "↗",
+    href: "/docs/anubis",
   },
   {
     number: "02",
@@ -15,6 +18,7 @@ const features = [
     description:
       "Start with a corporate-friendly default experience, then tailor the challenge and presentation to match your organization.",
     icon: "◇",
+    href: "/docs/customization",
   },
   {
     number: "03",
@@ -22,6 +26,7 @@ const features = [
     description:
       "Identify browser automation signals and apply friction where it helps protect your site and its resources.",
     icon: "⌘",
+    href: "/docs/extensions/headless",
   },
   {
     number: "04",
@@ -29,43 +34,69 @@ const features = [
     description:
       "Combine signals and challenges to distinguish useful visitors from unwanted automated traffic with a flexible flow.",
     icon: "⤢",
+    href: "/docs/challenges/soteria",
   },
 ];
 
-function Brand({ inverse = false }: { inverse?: boolean }) {
-  return (
-    <Link className={`brand${inverse ? " brand-inverse" : ""}`} href="/" aria-label="BotStopper from Techaro home">
-      <Image src="/botstopper-mark.svg" alt="" width={44} height={44} priority />
-      <span className="brand-copy">
-        <strong>BotStopper</strong>
-        <small>from Techaro</small>
-      </span>
-    </Link>
-  );
-}
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://botstopper.net/#organization",
+      name: "Techaro",
+      url: "https://botstopper.net",
+      logo: "https://botstopper.net/botstopper-mark.svg",
+      sameAs: ["https://github.com/TecharoHQ"],
+      contactPoint: [
+        {
+          "@type": "ContactPoint",
+          contactType: "customer support",
+          email: "me@xeiaso.net",
+        },
+      ],
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "BotStopper",
+      url: "https://botstopper.net",
+      description:
+        "Bot protection built by the creators of Anubis. Helps protect websites from scraping and automated abuse while keeping the experience straightforward for people.",
+      applicationCategory: "SecurityApplication",
+      operatingSystem: "Linux",
+      offers: {
+        "@type": "Offer",
+        price: "50",
+        priceCurrency: "USD",
+      },
+      publisher: { "@id": "https://botstopper.net/#organization" },
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://botstopper.net/#website",
+      name: "BotStopper",
+      url: "https://botstopper.net",
+      publisher: { "@id": "https://botstopper.net/#organization" },
+    },
+  ],
+};
 
-function Header() {
-  return (
-    <header className="site-header">
-      <div className="container header-inner">
-        <Brand />
-        <nav className="main-nav" aria-label="Main navigation">
-          <a href="#platform">Platform</a>
-          <a href="#features">Features</a>
-          <Link href="/docs">Documentation</Link>
-        </nav>
-        <a className="header-cta" href="http://github.com/sponsors/Xe" target="_blank" rel="noreferrer">
-          Support the project <span aria-hidden="true">↗</span>
-        </a>
-      </div>
-    </header>
-  );
-}
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+    types: { "text/markdown": "/index.md" },
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "BotStopper from Techaro",
+  },
+};
 
 export default function Home() {
   return (
     <>
-      <Header />
+      <SiteHeader variant="home" />
       <main>
         <section className="hero" id="platform">
           <div className="hero-glow" aria-hidden="true" />
@@ -124,12 +155,12 @@ export default function Home() {
             </div>
             <div className="feature-grid">
               {features.map((feature) => (
-                <article className="feature-card" key={feature.number}>
+                <Link className="feature-card" key={feature.number} href={feature.href}>
                   <div className="feature-top"><span>{feature.number} / 04</span><span className="feature-icon" aria-hidden="true">{feature.icon}</span></div>
                   <h3>{feature.title}</h3>
                   <p>{feature.description}</p>
                   <span className="feature-arrow" aria-hidden="true">↗</span>
-                </article>
+                </Link>
               ))}
             </div>
           </div>
@@ -167,9 +198,8 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <footer className="site-footer">
-        <div className="container footer-inner"><Brand inverse /><p>Protecting the places people come to on the internet.</p><div className="footer-links"><Link href="/docs">Documentation</Link><a href="http://github.com/sponsors/Xe" target="_blank" rel="noreferrer">GitHub Sponsors ↗</a></div><small>© Techaro. BotStopper from Techaro.</small></div>
-      </footer>
+      <SiteFooter />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
     </>
   );
 }

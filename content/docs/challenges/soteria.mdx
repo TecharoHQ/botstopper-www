@@ -1,6 +1,4 @@
-# Custom challenge methods
-
-## `soteria`
+# Soteria
 
 [Soteria](https://github.com/Xe/soteria) is an obfuscated virtual machine that is designed to be equitable to mobile phones as well as using SIMD to execute four solution programs at once (Single Program, Multiple Dispatch). It dynamically synthesizes programs at runtime similar to RandomX. To use it, create a bot or threshold rule that uses the `soteria` challenge method:
 

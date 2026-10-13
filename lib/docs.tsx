@@ -1,5 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { notFound } from "next/navigation";
 
 const docsRoot = path.join(process.cwd(), "content", "docs");
@@ -8,6 +10,7 @@ export type DocPage = {
   slug: string;
   title: string;
   file: string;
+  content: string;
 };
 
 export type DocNavItem = {
@@ -34,6 +37,7 @@ function readDoc(filePath: string, slug: string): DocPage {
   return {
     slug,
     title,
+    content: frontmatter ? source.slice(frontmatter[0].length) : source,
     file: path.relative(docsRoot, filePath).replace(/\.mdx$/i, "").split(path.sep).join("/"),
   };
 }
@@ -98,4 +102,28 @@ export function getDoc(slug: string[]) {
 
 export function getDocParams() {
   return getDocs().map((doc) => ({ slug: doc.slug ? doc.slug.split("/") : [] }));
+}
+
+export function Markdown({ source }: { source: string }) {
+  return (
+    <div className="markdown-content">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          // react-markdown passes the hast node as a prop; keep it out of
+          // the DOM attributes.
+          a: ({ href, children, node, ...props }) => {
+            const external = /^https?:/i.test(href ?? "");
+            // Relative links to the .md twins point agents at the markdown
+            // source; humans clicking through the rendered page get HTML.
+            const resolved = !external && href?.endsWith(".md") ? href.slice(0, -3) : href;
+            return <a href={resolved} {...props} {...(external ? { target: "_blank", rel: "noreferrer" } : {})}>{children}</a>;
+          },
+          table: ({ children, node, ...props }) => <div className="markdown-table-scroll" tabIndex={0} role="region" aria-label="Scrollable table"><table {...props}>{children}</table></div>,
+        }}
+      >
+        {source}
+      </ReactMarkdown>
+    </div>
+  );
 }
