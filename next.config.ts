@@ -19,6 +19,12 @@ const nextConfig: NextConfig = {
     "/md/**": ["./content/**/*.md", "./content/docs/**/*.mdx"],
     "/llms.txt": ["./content/docs/**/*.mdx"],
   },
+  redirects() {
+    return [
+      { source: "/docs/introduction", destination: "/docs", permanent: true },
+      { source: "/docs/introduction.md", destination: "/docs.md", permanent: true },
+    ];
+  },
   async headers() {
     // RFC 8288: advertise the sitemap and the markdown twin of each page.
     // (Vary: Accept on HTML responses is not set here because Next.js
