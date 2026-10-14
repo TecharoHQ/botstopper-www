@@ -1,3 +1,8 @@
+---
+title: Headless browser detection
+description: Configure headless browser detection with client hints, Fetch Metadata, policy rules, metrics, and known limits.
+---
+
 # Headless browser detection
 
 BotStopper can run a headless browser detector on the challenge page. The detector is a small WebAssembly module. It examines the browser for signs of automation. Before the client submits the challenge, the detector sends a report to BotStopper.
@@ -49,7 +54,7 @@ The detector uses JavaScript `Function` and `eval` to run browser probes. If you
 
 BotStopper records blocked evaluation as the zero-weight `eval.blocked` signal. This signal alone does not fail the challenge, but it reduces detection coverage. The WebAssembly requirement and detector-level error checks still apply.
 
-## Fetch Metadata
+<h2 id="fetch-metadata">Fetch Metadata</h2>
 
 BotStopper checks the Fetch Metadata headers on the detector downloads and the report. The loader request uses `Sec-Fetch-Dest: script`. The WebAssembly download and report use `Sec-Fetch-Dest: empty`.
 

@@ -46,44 +46,21 @@ const techaroSameAs = [
   "https://bsky.app/profile/techaro.lol",
 ];
 
-const techaroServices = [
+const faqs = [
   {
-    name: "Bot Protection",
-    description:
-      "Open-source and commercial tools that shield your infrastructure from automated abuse using proof-of-work challenges.",
-  },
-  {
-    name: "AI Consultancy",
-    description:
-      "Strategic guidance on integrating AI into your products and workflows, from architecture to deployment.",
-  },
-  {
-    name: "Custom Software",
-    description:
-      "End-to-end engineering for teams that need reliable, performant software built to their specifications.",
-  },
-];
-
-const techaroFaqs = [
-  {
-    question: "What is Anubis?",
+    question: "What is BotStopper?",
     answer:
-      "Anubis is open-source bot protection for the web. It uses proof-of-work challenges to stop automated abuse while letting real users through. It is free, and you host it yourself. Installation instructions are at https://anubis.techaro.lol.",
+      "BotStopper is a commercial patchset for Anubis, the open-source proof-of-work bot protection project. It adds organization-focused features such as headless browser detection, the Soteria challenge, customization, and deployment packaging.",
   },
   {
-    question: "What is the difference between Anubis and BotStopper?",
+    question: "How much does BotStopper cost?",
     answer:
-      "BotStopper is commercial bot protection built on Anubis. It adds enterprise features, managed deployment, and dedicated support.",
+      "BotStopper costs $50 per month through GitHub Sponsors. If you need invoices or purchase orders, or that price does not fit your situation, contact the team to discuss options.",
   },
   {
-    question: "How much do Anubis and BotStopper cost?",
+    question: "How are BotStopper and Anubis related?",
     answer:
-      "Anubis is free and open source. BotStopper costs US$50 per month, billed through GitHub Sponsors.",
-  },
-  {
-    question: "When is Anubis the wrong tool?",
-    answer:
-      "Do not use Anubis for network-level volumetric DDoS attacks, or for endpoints whose clients cannot run JavaScript, such as API clients or RSS readers.",
+      "BotStopper is made by Techaro, the team behind Anubis. It builds on Anubis and adds features for organizations. Anubis remains an open-source project that you can run yourself.",
   },
 ];
 
@@ -151,7 +128,6 @@ const jsonLd = {
         "Bot protection built by the creators of Anubis. Helps protect websites from scraping and automated abuse while keeping the experience straightforward for people.",
       applicationCategory: "SecurityApplication",
       operatingSystem: "Linux",
-      sameAs: techaroSameAs,
       brand: { "@id": "https://techaro.lol/#organization" },
       publisher: { "@id": "https://techaro.lol/#organization" },
       isBasedOn: { "@id": "https://techaro.lol/#anubis" },
@@ -176,22 +152,8 @@ const jsonLd = {
       },
     },
     {
-      "@type": "WebSite",
-      "@id": "https://techaro.lol/#website",
-      url: "https://techaro.lol",
-      name: "Techaro",
-      publisher: { "@id": "https://techaro.lol/#organization" },
-    },
-    ...techaroServices.map(({ name, description }) => ({
-      "@type": "Service",
-      name,
-      description,
-      provider: { "@id": "https://techaro.lol/#organization" },
-      areaServed: "Worldwide",
-    })),
-    {
       "@type": "FAQPage",
-      mainEntity: techaroFaqs.map(({ question, answer }) => ({
+      mainEntity: faqs.map(({ question, answer }) => ({
         "@type": "Question",
         name: question,
         acceptedAnswer: { "@type": "Answer", text: answer },
@@ -291,6 +253,23 @@ export default function Home() {
                   <p>{feature.description}</p>
                   <span className="feature-arrow" aria-hidden="true">↗</span>
                 </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="feature-section section-pad" id="faq">
+          <div className="container">
+            <div className="section-heading">
+              <div><p className="eyebrow">QUESTIONS, ANSWERED</p><h2>About BotStopper.</h2></div>
+              <p>Learn how BotStopper builds on Anubis and what to expect from the product.</p>
+            </div>
+            <div className="feature-grid">
+              {faqs.map(({ question, answer }) => (
+                <article className="feature-card" key={question}>
+                  <h3>{question}</h3>
+                  <p>{answer}</p>
+                </article>
               ))}
             </div>
           </div>

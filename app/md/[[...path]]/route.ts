@@ -7,6 +7,24 @@ const markdownHeaders = {
   Vary: "Accept",
 };
 
+const canonicalBase = "https://botstopper.net";
+
+function canonicalPath(path: string[]): string {
+  if (path.length === 0) return "/";
+
+  const [head, ...rest] = path;
+  if (head === "llms" && rest.length === 0) return "/llms.txt";
+  if (head === "docs") {
+    const parts = [...rest];
+    if (parts.at(-1) === "index") parts.pop();
+    return parts.length ? `/docs/${parts.join("/")}` : "/docs";
+  }
+  if (rest.length === 0 && isMarkdownPageName(head)) {
+    return head === "index" ? "/" : `/${head}`;
+  }
+  return "/";
+}
+
 const notFoundBody = [
   "# 404: Not found",
   "",
@@ -62,5 +80,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pat
   if (body === null) {
     return new Response(notFoundBody, { status: 404, headers: markdownHeaders });
   }
-  return new Response(body, { headers: markdownHeaders });
+  const headers = new Headers(markdownHeaders);
+  headers.set("Link", `<${canonicalBase}${canonicalPath(path)}>; rel="canonical"`);
+  return new Response(body, { headers });
 }

@@ -7,5 +7,6 @@ export function generateStaticParams() {
 
 export async function GET(_request: Request, { params }: { params: Promise<{ slug?: string[] }> }) {
   const { slug = [] } = await params;
-  return createSocialImage(getDoc(slug).title, "BotStopper product documentation");
+  const doc = getDoc(slug);
+  return createSocialImage(doc.title, doc.description);
 }

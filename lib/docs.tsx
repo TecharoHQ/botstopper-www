@@ -3,12 +3,14 @@ import path from "node:path";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { notFound } from "next/navigation";
+import { parse as parseYaml } from "yaml";
 
 const docsRoot = path.join(process.cwd(), "content", "docs");
 
 export type DocPage = {
   slug: string;
   title: string;
+  description: string;
   file: string;
   content: string;
 };
@@ -27,17 +29,51 @@ function titleFromFilename(filename: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function frontmatterFromSource(source: string) {
+  const match = source.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?/);
+  if (!match) return { content: source, values: {} as Record<string, unknown> };
+
+  const parsed: unknown = parseYaml(match[1]);
+  const values = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? parsed as Record<string, unknown>
+    : {};
+
+  return { content: source.slice(match[0].length), values };
+}
+
+export function describeDoc(content: string, maxLength = 160): string {
+  let inFence = false;
+  for (const line of content.split("\n")) {
+    if (line.trim().startsWith("```")) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    const trimmed = line.trim();
+    if (!trimmed || /^import\s/.test(trimmed) || /^[#>-]/.test(trimmed)) continue;
+    const text = trimmed
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\s+/g, " ");
+    return text.length > maxLength ? `${text.slice(0, maxLength - 3).trimEnd()}...` : text;
+  }
+  return "";
+}
+
 function readDoc(filePath: string, slug: string): DocPage {
   const source = readFileSync(filePath, "utf8");
-  const frontmatter = source.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?/);
-  const title = frontmatter?.[1].match(/^title:\s*["']?(.+?)["']?\s*$/m)?.[1]
-    ?? source.match(/^#\s+(.+)$/m)?.[1]
+  const { content, values } = frontmatterFromSource(source);
+  const title = (typeof values.title === "string" && values.title.trim() ? values.title.trim() : undefined)
+    ?? content.match(/^#\s+(.+)$/m)?.[1]
     ?? titleFromFilename(path.basename(filePath));
+  const description = (typeof values.description === "string" && values.description.trim() ? values.description.trim() : undefined)
+    ?? describeDoc(content);
 
   return {
     slug,
     title,
-    content: frontmatter ? source.slice(frontmatter[0].length) : source,
+    description: description || `${title} documentation.`,
+    content,
     file: path.relative(docsRoot, filePath).replace(/\.mdx$/i, "").split(path.sep).join("/"),
   };
 }
