@@ -39,45 +39,170 @@ const features = [
   },
 ];
 
+const techaroSameAs = [
+  "https://www.wikidata.org/wiki/Q134301803",
+  "https://github.com/TecharoHQ",
+  "https://www.linkedin.com/company/techaro/",
+  "https://bsky.app/profile/techaro.lol",
+];
+
+const techaroServices = [
+  {
+    name: "Bot Protection",
+    description:
+      "Open-source and commercial tools that shield your infrastructure from automated abuse using proof-of-work challenges.",
+  },
+  {
+    name: "AI Consultancy",
+    description:
+      "Strategic guidance on integrating AI into your products and workflows, from architecture to deployment.",
+  },
+  {
+    name: "Custom Software",
+    description:
+      "End-to-end engineering for teams that need reliable, performant software built to their specifications.",
+  },
+];
+
+const techaroFaqs = [
+  {
+    question: "What is Anubis?",
+    answer:
+      "Anubis is open-source bot protection for the web. It uses proof-of-work challenges to stop automated abuse while letting real users through. It is free, and you host it yourself. Installation instructions are at https://anubis.techaro.lol.",
+  },
+  {
+    question: "What is the difference between Anubis and BotStopper?",
+    answer:
+      "BotStopper is commercial bot protection built on Anubis. It adds enterprise features, managed deployment, and dedicated support.",
+  },
+  {
+    question: "How much do Anubis and BotStopper cost?",
+    answer:
+      "Anubis is free and open source. BotStopper costs US$50 per month, billed through GitHub Sponsors.",
+  },
+  {
+    question: "When is Anubis the wrong tool?",
+    answer:
+      "Do not use Anubis for network-level volumetric DDoS attacks, or for endpoints whose clients cannot run JavaScript, such as API clients or RSS readers.",
+  },
+];
+
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://botstopper.net/#organization",
+      "@id": "https://techaro.lol/#organization",
       name: "Techaro",
-      url: "https://botstopper.net",
-      logo: "https://botstopper.net/botstopper-mark.svg",
-      sameAs: ["https://github.com/TecharoHQ"],
-      contactPoint: [
-        {
-          "@type": "ContactPoint",
-          contactType: "customer support",
-          email: "me@xeiaso.net",
-        },
-      ],
+      url: "https://techaro.lol",
+      logo: "https://techaro.lol/img/logo_waffle.svg",
+      description:
+        "Security software, AI consultancy, and custom software services.",
+      foundingDate: "2024",
+      founder: {
+        "@type": "Person",
+        name: "Xe Iaso",
+        sameAs: "https://www.wikidata.org/wiki/Q134301859",
+      },
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Ottawa",
+        addressRegion: "ON",
+        addressCountry: "CA",
+      },
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "sales",
+        email: "sales@techaro.lol",
+        url: "https://techaro.lol/contact",
+        availableLanguage: "English",
+      },
+      knowsAbout: ["Bot Protection", "AI Consultancy", "Software Development"],
+      sameAs: techaroSameAs,
     },
     {
-      "@type": "SoftwareApplication",
+      "@type": ["SoftwareApplication", "Product"],
+      "@id": "https://techaro.lol/#anubis",
+      name: "Anubis",
+      url: "https://anubis.techaro.lol",
+      image: "https://techaro.lol/img/anubis-happy.webp",
+      applicationCategory: "SecurityApplication",
+      operatingSystem: "Linux, macOS, Windows",
+      description:
+        "Open-source bot protection for the web that uses proof-of-work challenges to stop automated abuse.",
+      brand: { "@id": "https://techaro.lol/#organization" },
+      publisher: { "@id": "https://techaro.lol/#organization" },
+      offers: {
+        "@type": "Offer",
+        url: "https://techaro.lol/pricing",
+        price: "0",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+        description: "Free and open source. Self-hosted.",
+      },
+    },
+    {
+      "@type": ["SoftwareApplication", "Product"],
+      "@id": "https://techaro.lol/#botstopper",
       name: "BotStopper",
       url: "https://botstopper.net",
+      image: "https://botstopper.net/botstopper-mark.svg",
       description:
         "Bot protection built by the creators of Anubis. Helps protect websites from scraping and automated abuse while keeping the experience straightforward for people.",
       applicationCategory: "SecurityApplication",
       operatingSystem: "Linux",
+      sameAs: techaroSameAs,
+      brand: { "@id": "https://techaro.lol/#organization" },
+      publisher: { "@id": "https://techaro.lol/#organization" },
+      isBasedOn: { "@id": "https://techaro.lol/#anubis" },
       offers: {
         "@type": "Offer",
+        url: "https://botstopper.net/pricing",
         price: "50",
         priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+        priceSpecification: {
+          "@type": "UnitPriceSpecification",
+          price: "50",
+          priceCurrency: "USD",
+          unitCode: "MON",
+          referenceQuantity: {
+            "@type": "QuantitativeValue",
+            value: 1,
+            unitCode: "MON",
+          },
+        },
+        description: "US$50 per month, billed through GitHub Sponsors.",
       },
-      publisher: { "@id": "https://botstopper.net/#organization" },
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://techaro.lol/#website",
+      url: "https://techaro.lol",
+      name: "Techaro",
+      publisher: { "@id": "https://techaro.lol/#organization" },
+    },
+    ...techaroServices.map(({ name, description }) => ({
+      "@type": "Service",
+      name,
+      description,
+      provider: { "@id": "https://techaro.lol/#organization" },
+      areaServed: "Worldwide",
+    })),
+    {
+      "@type": "FAQPage",
+      mainEntity: techaroFaqs.map(({ question, answer }) => ({
+        "@type": "Question",
+        name: question,
+        acceptedAnswer: { "@type": "Answer", text: answer },
+      })),
     },
     {
       "@type": "WebSite",
       "@id": "https://botstopper.net/#website",
       name: "BotStopper",
       url: "https://botstopper.net",
-      publisher: { "@id": "https://botstopper.net/#organization" },
+      publisher: { "@id": "https://techaro.lol/#organization" },
     },
   ],
 };
