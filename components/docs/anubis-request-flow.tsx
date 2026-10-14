@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 export function AnubisRequestFlow() {
   const sceneRef = useRef<HTMLDivElement>(null);
-  const stageRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const stageRefs = useRef<Array<HTMLLIElement | null>>([]);
 
   useEffect(() => {
     const container = sceneRef.current;
@@ -161,7 +161,7 @@ export function AnubisRequestFlow() {
         }
         renderer.dispose();
         renderer.domElement.remove();
-        delete container.dataset.loaded;
+        delete container!.dataset.loaded;
       };
 
       try {
@@ -197,14 +197,14 @@ export function AnubisRequestFlow() {
         mixer.update(0);
 
         const resize = () => {
-          const { width, height } = container.getBoundingClientRect();
+          const { width, height } = container!.getBoundingClientRect();
           if (!width || !height) return;
           const halfHeight = 2;
           const aspect = width / height;
-          const worldX = (element: HTMLDivElement | null, fallback: number) => {
+          const worldX = (element: Element | null, fallback: number) => {
             if (!element) return fallback;
             const rect = element.getBoundingClientRect();
-            return ((rect.left + rect.width / 2) - (container.getBoundingClientRect().left + width / 2)) * (halfHeight * 2 / height);
+            return ((rect.left + rect.width / 2) - (container!.getBoundingClientRect().left + width / 2)) * (halfHeight * 2 / height);
           };
           requestFrom = worldX(stageRefs.current[1] ?? null, -2.2);
           gateX = worldX(stageRefs.current[2] ?? null, 0);
@@ -225,16 +225,16 @@ export function AnubisRequestFlow() {
           render();
         };
 
-        container.appendChild(renderer.domElement);
+        container!.appendChild(renderer.domElement);
         resizeObserver = new ResizeObserver(resize);
-        resizeObserver.observe(container);
+        resizeObserver.observe(container!);
         resize();
-        container.dataset.loaded = "true";
+        container!.dataset.loaded = "true";
         visibilityObserver = new IntersectionObserver(([entry]) => {
           visible = entry.isIntersecting;
           updatePlayback();
         });
-        visibilityObserver.observe(container);
+        visibilityObserver.observe(container!);
         motion.addEventListener("change", updatePlayback);
         document.addEventListener("visibilitychange", updatePlayback);
       } catch (error) {
