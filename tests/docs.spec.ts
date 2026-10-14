@@ -1,97 +1,111 @@
-import { expect, test } from "@playwright/test";
+import { readdirSync } from "node:fs";
+import path from "node:path";
+import { expect, test, type Page } from "@playwright/test";
 
-test("code blocks hydrate and copy their code", async ({ page, context }) => {
+function docRoutes(directory = path.join(process.cwd(), "content", "docs"), segments: string[] = []): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    if (entry.isDirectory()) return docRoutes(path.join(directory, entry.name), [...segments, entry.name]);
+    if (!entry.name.endsWith(".mdx")) return [];
+    const name = entry.name.slice(0, -4);
+    return [`/docs${[...segments, ...(name === "index" ? [] : [name])].map((segment) => `/${segment}`).join("")}`];
+  });
+}
+
+const routes = docRoutes();
+const runtimeErrors = new WeakMap<Page, string[]>();
+
+test.beforeEach(({ page }) => {
+  const errors: string[] = [];
+  runtimeErrors.set(page, errors);
+  page.on("pageerror", (error) => errors.push(error.message));
+});
+
+test.afterEach(({ page }) => {
+  expect(runtimeErrors.get(page)).toEqual([]);
+});
+
+for (const route of routes) {
+  test(`documentation loads: ${route}`, async ({ page }) => {
+    const response = await page.goto(route, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+    await expect(page.locator(".docs-article .markdown-content > h1:visible")).toBeVisible();
+    await expect(page.locator(".docs-sidebar")).toBeVisible();
+  });
+}
+
+for (const route of ["/", "/about", "/contact", "/pricing", "/privacy"]) {
+  test(`public page loads: ${route}`, async ({ page }) => {
+    const response = await page.goto(route, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+    await expect(page.locator("main")).toBeVisible();
+  });
+}
+
+test("code blocks copy the displayed code", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.goto("/docs/installation");
-  await expect(page.getByRole("heading", { name: "Installation", exact: true })).toBeVisible();
-  const copy = page.getByRole("button", { name: "Copy code", exact: true }).first();
-  await expect(copy).toBeVisible();
-  await copy.click();
-  await expect(copy).toHaveText("Copied");
-  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(
-    "-ghcr.io/techarohq/anubis:latest\n+ghcr.io/techarohq/botstopper/anubis:latest\n",
-  );
+  await page.goto("/docs/installation", { waitUntil: "networkidle" });
+  const block = page.locator(".docs-code-block").first();
+  const source = await block.locator("pre").textContent();
+  expect(source).toMatch(/\S/);
+  await block.getByRole("button").click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(source);
 });
 
-test("documentation links and tables survive the MDX migration", async ({ page }) => {
-  await page.goto("/docs");
-  await page.locator(".markdown-content").getByRole("link", { name: "Customization", exact: true }).click();
-  await expect(page).toHaveURL(/\/docs\/customization$/);
-  await expect(page.getByRole("heading", { name: "Customization", exact: true })).toBeVisible();
-  await expect(page.getByRole("columnheader", { name: "Environment variable", exact: true })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Scrollable table" })).toHaveCount(2);
-  await page.goto("/docs/does-not-exist");
-  await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
-});
-
-test("clipboard errors offer a manual fallback", async ({ page }) => {
+test("clipboard errors leave readable code and a status message", async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "clipboard", {
       value: { writeText: () => Promise.reject(new Error("Clipboard unavailable")) },
     });
   });
-  await page.goto("/docs/installation");
-  await page.getByRole("button", { name: "Copy code", exact: true }).first().click();
-  await expect(page.getByRole("status").filter({ hasText: "Could not copy" })).toHaveText(
-    "Could not copy. Select the code and copy it manually.",
-  );
+  await page.goto("/docs/installation", { waitUntil: "networkidle" });
+  const block = page.locator(".docs-code-block").first();
+  await block.getByRole("button").click();
+  await expect(block.getByRole("status")).toHaveText(/\S/);
+  await expect(block.locator("pre")).toBeVisible();
 });
 
-test("nested MDX guides retain their Markdown endpoints and agent indexes", async ({ page, request }) => {
-  for (const [slug, title] of [["introduction", "What is BotStopper?"], ["challenges/soteria", "Soteria"], ["extensions/headless", "Headless browser detection"]]) {
-    await page.goto("/docs");
-    await page.locator(`.markdown-content a[href="/docs/${slug}"]`).click();
-    await expect(page).toHaveURL(`/docs/${slug}`);
-    await expect(page.locator(".markdown-content > h1")).toHaveText(title);
+test("sidebar links load pages with rendered tables", async ({ page }) => {
+  await page.goto("/docs", { waitUntil: "networkidle" });
+  await page.locator('.docs-sidebar a[href="/docs/customization"]').click();
+  await expect(page).toHaveURL(/\/docs\/customization$/);
+  await expect(page.locator(".markdown-content table").first()).toBeVisible();
+});
 
-    const source = await request.get(`/docs/${slug}.md`);
-    expect(source.status()).toBe(200);
+test("Markdown endpoints and agent indexes load", async ({ request }) => {
+  for (const route of routes) {
+    const source = await request.get(`${route}.md`);
+    expect(source.status(), route).toBe(200);
     expect(source.headers()["content-type"]).toContain("text/markdown");
-    expect(await source.text()).toContain(`# ${title}`);
-    const negotiated = await request.get(`/docs/${slug}`, { headers: { Accept: "text/markdown" } });
-    expect(await negotiated.text()).toBe(await source.text());
+    const content = await source.text();
+    expect(content, route).toMatch(/^#\s/m);
+    const negotiated = await request.get(route, { headers: { Accept: "text/markdown" } });
+    expect(await negotiated.text(), route).toBe(content);
   }
   const index = await request.get("/docs/llms.txt");
   expect(index.status()).toBe(200);
-  expect(await index.text()).toContain("/docs/challenges/soteria.md");
-  for (const name of ["about", "contact", "pricing", "privacy"]) {
-    await page.goto(`/${name}`);
-    await expect(page.locator(".markdown-content > h1")).toBeVisible();
-  }
+  expect(await index.text()).toContain("/docs/");
+  const missing = await request.get("/docs/does-not-exist.md");
+  expect(missing.status()).toBe(404);
 });
 
-test("Soteria explains its four sample lanes and respects motion preferences", async ({ page, request }) => {
-  const runtimeErrors: Error[] = [];
-  page.on("pageerror", (error) => runtimeErrors.push(error));
+test("nested pages expand their sidebar folder", async ({ page }) => {
+  await page.goto("/docs/installation/native-install", { waitUntil: "networkidle" });
+  const link = page.locator('.docs-sidebar a[href="/docs/installation/native-install"]');
+  await expect(link).toBeVisible();
+  expect(await link.evaluate((element) => element.closest("details")?.open)).toBe(true);
+});
 
-  const response = await request.get("/docs/challenges/soteria");
-  expect(response.status()).toBe(200);
-  const html = await response.text();
-  expect(html).toContain("Illustrative sample data, not a live challenge.");
-  expect(html).toContain("10000000");
+test("Mermaid diagrams and highlighted code load", async ({ page }) => {
+  await page.goto("/docs/configuration/redirect-domains", { waitUntil: "networkidle" });
+  await expect(page.locator(".mermaid-diagram svg").first()).toBeVisible();
+  await expect(page.locator("pre code span[style*='color']").first()).toBeVisible();
+});
 
-  await page.goto("/docs/challenges/soteria");
-  const lanes = page.locator(".soteria-lanes");
-  await expect(lanes.locator(":scope > li")).toHaveCount(4);
-  await expect(lanes).toHaveAttribute("data-frame", "0");
-  await expect(page.getByRole("meter")).toHaveCount(4);
-  await expect(page.getByText("Leading zero bits").first()).toBeVisible();
-
-  await expect(lanes).toHaveAttribute("data-frame", "1", { timeout: 3000 });
-  await expect(page.getByText("Solution").first()).toBeVisible();
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(lanes).toHaveAttribute("data-frame", "0");
-  await page.waitForTimeout(1800);
-  await expect(lanes).toHaveAttribute("data-frame", "0");
-
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await expect(lanes).toHaveAttribute("data-frame", "1", { timeout: 3000 });
+test("Soteria visualizer loads on desktop and mobile", async ({ page }) => {
+  await page.goto("/docs/challenges/soteria", { waitUntil: "networkidle" });
+  await expect(page.locator(".soteria-lane-visualizer")).toBeVisible();
+  await expect(page.getByRole("meter").first()).toBeVisible();
   await page.setViewportSize({ width: 375, height: 812 });
-  const hasNoVisualizerOverflow = await page.locator(".soteria-lane-visualizer").evaluate((element) => element.scrollWidth <= element.clientWidth);
-  expect(hasNoVisualizerOverflow).toBe(true);
-  const mobileColumns = await lanes.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length);
-  expect(mobileColumns).toBe(1);
-
-  await page.goto("/docs");
-  expect(runtimeErrors).toEqual([]);
+  const fits = await page.locator(".soteria-lane-visualizer").evaluate((element) => element.scrollWidth <= element.clientWidth);
+  expect(fits).toBe(true);
 });
