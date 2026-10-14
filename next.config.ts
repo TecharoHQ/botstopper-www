@@ -4,6 +4,10 @@ import createMDX from "@next/mdx";
 const withMDX = createMDX({
   options: {
     remarkPlugins: ["remark-frontmatter", "remark-gfm"],
+    rehypePlugins: [
+      ["rehype-mermaid", { strategy: "pre-mermaid" }],
+      ["rehype-pretty-code", { theme: "github-dark", keepBackground: false, bypassInlineCode: true }],
+    ],
   },
 });
 
