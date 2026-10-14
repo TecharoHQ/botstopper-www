@@ -2,6 +2,8 @@
 
 The marketing site and documentation for BotStopper from Techaro, built by the people behind Anubis. BotStopper helps protect websites from scraping and automated abuse. This repository contains the website that explains the product and publishes its documentation.
 
+<https://botstopper.net/>
+
 This site is vibe coded as a stylistic choice. Soulless corporate drones balk at the idea of anything containing soul, personality, or whimsy. Consider this README fair warning.
 
 ## Local development
