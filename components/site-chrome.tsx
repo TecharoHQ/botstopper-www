@@ -22,24 +22,16 @@ export function SiteHeader({ variant = "page" }: { variant?: HeaderVariant }) {
       <div className={`container ${isDocs ? "docs-header-inner" : "header-inner"}`}>
         <Brand size={isDocs ? 40 : 44} />
         {variant === "home" ? (
-          <nav className="main-nav" aria-label="Main navigation">
-            <a href="#platform">Platform</a>
-            <a href="#features">Features</a>
+          <nav className="main-nav" aria-label="Main navigation" style={{ marginRight: "auto" }}>
             <Link href="/docs">Documentation</Link>
             <Link href="/pricing">Pricing</Link>
-            <Link href="/about">About</Link>
             <Link href="/contact">Contact</Link>
-            <Link href="/privacy">Privacy</Link>
           </nav>
         ) : (
-          <nav className={isDocs ? undefined : "main-nav"} aria-label="Main navigation">
-            <Link href="/#platform">Platform</Link>
-            <Link href="/#features">Features</Link>
+          <nav className={isDocs ? undefined : "main-nav"} aria-label="Main navigation" style={{ marginRight: "auto" }}>
             <Link href="/docs" className={isDocs ? "active" : undefined}>Documentation</Link>
             <Link href="/pricing">Pricing</Link>
-            <Link href="/about">About</Link>
             <Link href="/contact">Contact</Link>
-            <Link href="/privacy">Privacy</Link>
           </nav>
         )}
         <a className="header-cta" href="http://github.com/sponsors/Xe" target="_blank" rel="noreferrer">
@@ -57,6 +49,7 @@ export function SiteFooter() {
         <Brand inverse />
         <p>Protecting the places people come to on the internet.</p>
         <div className="footer-links">
+          <a href="https://techaro.lol" target="_blank" rel="noreferrer">Techaro</a>
           <Link href="/docs">Documentation</Link>
           <Link href="/pricing">Pricing</Link>
           <Link href="/about">About</Link>
