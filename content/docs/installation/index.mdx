@@ -1,0 +1,57 @@
+# Installation
+
+Install BotStopper as a native service or container, then connect it to your application and reverse proxy.
+
+## Deployment guides
+
+- [Native packages](/docs/installation/native-install.md)
+- [Docker Compose](/docs/installation/docker-compose.md)
+- [Kubernetes](/docs/installation/kubernetes.md)
+- [Windows](/docs/installation/windows.md)
+- [Apache](/docs/installation/apache.md)
+- [Caddy](/docs/installation/caddy.md)
+- [Nginx](/docs/installation/nginx.md)
+- [HAProxy](/docs/installation/haproxy.md)
+- [Traefik](/docs/installation/traefik.md)
+- [Cloudflare](/docs/installation/cloudflare.md)
+
+## Binary packages
+
+Binary packages are available [in the GitHub Releases tab](https://github.com/TecharoHQ/botstopper/releases). The repository is currently private, so that link works for team members. The main difference is that the package name is `techaro-botstopper`, the systemd service is `techaro-botstopper@your-instance.service`, the binary is `/usr/bin/botstopper`, and the configuration is in `/etc/techaro-botstopper`. See [native package installation](/docs/installation/native-install.md) for package commands and service configuration.
+
+## Docker / Podman
+
+In order to pull the BotStopper image, you need to [authenticate with GitHub's Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-to-the-container-registry).
+
+```text
+docker login ghcr.io -u your-username --password-stdin
+```
+
+Use `ghcr.io/techarohq/botstopper/anubis:latest` as the image. See [Docker Compose](/docs/installation/docker-compose.md) for a complete example.
+
+## Kubernetes
+
+If you are using Kubernetes, you will need to create an image pull secret:
+
+```text
+kubectl create secret docker-registry \
+  techarohq-botstopper \
+  --docker-server ghcr.io \
+  --docker-username your-username \
+  --docker-password your-access-token \
+  --docker-email your@email.address
+```
+
+Then attach it to your Deployment:
+
+```diff
+     spec:
+       securityContext:
+         fsGroup: 1000
++      imagePullSecrets:
++      - name: techarohq-botstopper
+```
+
+See [Kubernetes](/docs/installation/kubernetes.md) for sidecar, policy, and ingress examples.
+
+Next, read [configuration](/docs/configuration.md) for access policies and BotStopper options.

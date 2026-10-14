@@ -1,0 +1,64 @@
+# Docker Compose
+
+Docker Compose can run BotStopper alongside a backend and a reverse proxy, such as [Apache](/docs/installation/apache.md) or [Nginx](/docs/installation/nginx.md).
+
+This example listens on host port 8080 and forwards accepted requests to an Nginx static website. The website files are in `./www`.
+
+## Registry access
+
+The BotStopper image requires GitHub Container Registry credentials with permission to pull the package. Authenticate before you start Compose:
+
+```text
+docker login ghcr.io -u your-username --password-stdin
+```
+
+Supply your access token on standard input. Refer to [installation](/docs/installation.md) for registry authentication details.
+
+## Configuration
+
+Create `botPolicy.yaml` with your [policy definitions](/docs/policies.md). Create `compose.yml`:
+
+```yaml
+services:
+  anubis:
+    image: ghcr.io/techarohq/botstopper/anubis:latest
+    environment:
+      BIND: ":8080"
+      DIFFICULTY: "4"
+      METRICS_BIND: ":9090"
+      SERVE_ROBOTS_TXT: "true"
+      TARGET: "http://nginx"
+      POLICY_FNAME: "/etc/techaro-botstopper/botPolicy.yaml"
+      OG_PASSTHROUGH: "true"
+      OG_EXPIRY_TIME: "24h"
+    healthcheck:
+      test: ["CMD", "anubis", "--healthcheck"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+      start_period: 500ms
+    ports:
+      - 8080:8080
+    volumes:
+      - "./botPolicy.yaml:/etc/techaro-botstopper/botPolicy.yaml:ro"
+
+  nginx:
+    image: nginx
+    volumes:
+      - "./www:/usr/share/nginx/html"
+```
+
+The healthcheck runs the container's `anubis` executable with `--healthcheck`. Native packages use `/usr/bin/botstopper`.
+
+## Start the services
+
+```text
+docker compose pull
+docker compose up -d
+```
+
+Configure your reverse proxy to send requests to port 8080. It must supply the real client address to BotStopper. Refer to [client IP headers](/docs/configuration/client-ip.md).
+
+The proxy provides HTTPS for browser challenges. Use the [Caddy guide](/docs/installation/caddy.md) for a complete TLS example.
+
+Next, read [configuration](/docs/configuration.md).

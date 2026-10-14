@@ -1,0 +1,153 @@
+# Native packages
+
+Download the package for your operating system and architecture from the
+[BotStopper releases](https://github.com/TecharoHQ/botstopper/releases).
+The repository requires access to the BotStopper release artifacts.
+Replace the example filenames with the filenames you downloaded.
+
+BotStopper's package name is `techaro-botstopper`. Linux packages install
+the binary at `/usr/bin/botstopper` and configuration under
+`/etc/techaro-botstopper`.
+
+## Debian and Ubuntu
+
+Install the Debian package with `apt`:
+
+```bash
+sudo apt install ./techaro-botstopper-VERSION-ARCH.deb
+```
+
+## Red Hat and related distributions
+
+Install the RPM package with `dnf`:
+
+```bash
+sudo dnf install ./techaro-botstopper-VERSION.ARCH.rpm
+```
+
+For systems that use `yum`:
+
+```bash
+sudo yum install ./techaro-botstopper-VERSION.ARCH.rpm
+```
+
+You can also install the package directly with `rpm`:
+
+```bash
+sudo rpm -ivh ./techaro-botstopper-VERSION.ARCH.rpm
+```
+
+## Linux tarball
+
+Extract the archive and enter its directory:
+
+```bash
+tar zxf ./techaro-botstopper-VERSION-linux-ARCH.tar.gz
+cd techaro-botstopper-VERSION-linux-ARCH
+```
+
+Install the binary:
+
+```bash
+sudo install -Dm755 ./bin/botstopper /usr/local/bin/botstopper
+```
+
+Install the systemd unit with the binary path changed to `/usr/local/bin/botstopper`:
+
+```bash
+sed 's|/usr/bin/botstopper|/usr/local/bin/botstopper|' ./run/techaro-botstopper@.service \
+  | sudo tee /etc/systemd/system/techaro-botstopper@.service >/dev/null
+sudo systemctl daemon-reload
+```
+
+Install the default environment file:
+
+```bash
+sudo install -Dm644 ./run/default.env /etc/techaro-botstopper/default.env
+```
+
+## Distribution packages
+
+Some distributions package Anubis, the free, open source version of
+BotStopper. Those packages install Anubis. Use the BotStopper release
+package for BotStopper's additional features.
+
+## Configure an instance
+
+Make a copy of the default environment file for each service you protect.
+This example protects a Gitea service:
+
+```bash
+sudo cp /etc/techaro-botstopper/default.env /etc/techaro-botstopper/gitea.env
+sudo chmod 600 /etc/techaro-botstopper/gitea.env
+```
+
+For a Debian or RPM installation, copy the supplied policy file:
+
+```bash
+sudo cp /usr/share/doc/techaro-botstopper/botPolicies.yaml \
+  /etc/techaro-botstopper/gitea.botPolicies.yaml
+```
+
+For a tarball installation, copy it from the extracted archive:
+
+```bash
+sudo cp ./doc/botPolicies.yaml /etc/techaro-botstopper/gitea.botPolicies.yaml
+```
+
+Edit `/etc/techaro-botstopper/gitea.env` for your application:
+
+```bash
+BIND=[::1]:8239
+BIND_NETWORK=tcp
+METRICS_BIND=[::1]:8240
+METRICS_BIND_NETWORK=tcp
+POLICY_FNAME=/etc/techaro-botstopper/gitea.botPolicies.yaml
+TARGET=http://localhost:3000
+```
+
+Set `TARGET` to the application's address. Use
+[policies](/docs/policies.md) and [thresholds](/docs/configuration/thresholds.md)
+to select access rules and challenge difficulty.
+
+For a signing key that remains stable across restarts, generate a random seed:
+
+```bash
+openssl rand -hex 32
+```
+
+Add `ED25519_PRIVATE_KEY_HEX` to the environment file with the generated value.
+Keep the signing key private. Replicas that share authorization cookies must
+use the same signing key.
+
+## Start the service
+
+Enable and start the instance:
+
+```bash
+sudo systemctl enable --now techaro-botstopper@gitea.service
+```
+
+Inspect its state and logs:
+
+```bash
+sudo systemctl status techaro-botstopper@gitea.service
+sudo journalctl -u techaro-botstopper@gitea.service
+```
+
+Fetch the metrics endpoint to confirm that the service responds:
+
+```bash
+curl 'http://[::1]:8240/metrics'
+```
+
+Configure your reverse proxy to send requests to BotStopper at port `8239`.
+BotStopper forwards permitted requests to the application at `TARGET`.
+Preserve the client address as described in [client IP headers](/docs/configuration/client-ip.md).
+
+- [Apache](/docs/installation/apache.md)
+- [Caddy](/docs/installation/caddy.md)
+- [Nginx](/docs/installation/nginx.md)
+- [HAProxy](/docs/installation/haproxy.md)
+
+For Windows service installation, use the [Windows guide](/docs/installation/windows.md).
