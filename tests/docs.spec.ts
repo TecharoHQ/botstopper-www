@@ -38,7 +38,7 @@ test("clipboard errors offer a manual fallback", async ({ page }) => {
 });
 
 test("nested MDX guides retain their Markdown endpoints and agent indexes", async ({ page, request }) => {
-  for (const [slug, title] of [["anubis", "What is BotStopper?"], ["challenges/soteria", "Soteria"], ["extensions/headless", "Headless browser detection"]]) {
+  for (const [slug, title] of [["introduction", "What is BotStopper?"], ["challenges/soteria", "Soteria"], ["extensions/headless", "Headless browser detection"]]) {
     await page.goto("/docs");
     await page.locator(`.markdown-content a[href="/docs/${slug}"]`).click();
     await expect(page).toHaveURL(`/docs/${slug}`);
