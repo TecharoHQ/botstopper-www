@@ -2,24 +2,6 @@ import { getDocs } from "@/lib/docs";
 
 const site = "https://botstopper.net";
 
-// First prose paragraph of a document, links flattened, kept short so the
-// index stays scannable.
-function describe(content: string): string {
-  let inFence = false;
-  for (const line of content.split("\n")) {
-    if (line.trim().startsWith("```")) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
-    const trimmed = line.trim();
-    if (!trimmed || /^import\s/.test(trimmed) || /^[#->]/.test(trimmed)) continue;
-    const text = trimmed.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
-    return text.length > 100 ? `${text.slice(0, 97)}...` : text;
-  }
-  return "";
-}
-
 function docHref(slug: string): string {
   return `${site}/docs${slug ? `/${slug}` : ""}.md`;
 }
@@ -27,7 +9,7 @@ function docHref(slug: string): string {
 function docsList(): string {
   return getDocs()
     .map((doc) => {
-      const summary = describe(doc.content);
+      const summary = doc.description;
       return `- [${doc.title}](${docHref(doc.slug)})${summary ? `: ${summary}` : ""}`;
     })
     .join("\n");

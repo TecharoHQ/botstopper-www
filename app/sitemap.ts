@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/privacy`, priority: 0.3, changeFrequency: "yearly" },
   ];
   for (const { slug } of getDocParams()) {
+    if (slug.length === 0) continue;
     pages.push({
       url: `${base}/docs${slug.length ? `/${slug.join("/")}` : ""}`,
       priority: 0.7,

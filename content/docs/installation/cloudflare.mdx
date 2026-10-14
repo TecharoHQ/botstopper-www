@@ -1,3 +1,8 @@
+---
+title: "Cloudflare proxy setup"
+description: "Configure trusted Cloudflare proxy addresses and forward the client's IP to BotStopper in the expected headers."
+---
+
 # Cloudflare
 
 Configure your ingress to read `CF-Connecting-IP` from trusted Cloudflare proxies. Send that address to BotStopper as both `X-Forwarded-For` and `X-Real-IP`.

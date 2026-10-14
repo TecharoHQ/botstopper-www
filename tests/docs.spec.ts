@@ -76,9 +76,11 @@ test("Markdown endpoints and agent indexes load", async ({ request }) => {
     const source = await request.get(`${route}.md`);
     expect(source.status(), route).toBe(200);
     expect(source.headers()["content-type"]).toContain("text/markdown");
+    expect(source.headers().link, route).toContain(`<https://botstopper.net${route}>; rel="canonical"`);
     const content = await source.text();
     expect(content, route).toMatch(/^#\s/m);
     const negotiated = await request.get(route, { headers: { Accept: "text/markdown" } });
+    expect(negotiated.headers().link, route).toContain(`<https://botstopper.net${route}>; rel="canonical"`);
     expect(await negotiated.text(), route).toBe(content);
   }
   const index = await request.get("/docs/llms.txt");

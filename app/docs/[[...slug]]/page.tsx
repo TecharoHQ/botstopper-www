@@ -12,6 +12,8 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
   const { slug = [] } = await params;
   const doc = getDoc(slug);
   const title = `${doc.title} | BotStopper documentation`;
+  const description = doc.description;
+  const canonical = doc.slug ? `/docs/${doc.slug}` : "/docs";
   const image = {
     url: `/social/docs${doc.slug ? `/${doc.slug}` : ""}`,
     ...socialImageSize,
@@ -21,12 +23,20 @@ export async function generateMetadata({ params }: PageProps<"/docs/[[...slug]]"
 
   return {
     title,
+    description,
     alternates: {
-      canonical: doc.slug ? `/docs/${doc.slug}` : "/docs",
+      canonical,
       types: { "text/markdown": doc.slug ? `/docs/${doc.slug}.md` : "/docs.md" },
     },
-    openGraph: { title, images: [image] },
-    twitter: { card: "summary_large_image", title, images: [image] },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+      siteName: "BotStopper from Techaro",
+      images: [image],
+    },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 
