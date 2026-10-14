@@ -1,34 +1,55 @@
+import { readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
+import { parse } from "yaml";
 import { expect, test } from "@playwright/test";
 
-const documents = [
-  ["/docs", "BotStopper documentation", "Guides to BotStopper installation, configuration, customization, challenges, and upgrades."],
-  ["/docs/introduction", "What is BotStopper?", "Learn how BotStopper builds on Anubis to challenge automated traffic while keeping websites open to people."],
-  ["/docs/installation", "Installation", "Install BotStopper with binary packages, Docker, Podman, or Kubernetes using the BotStopper image and service names."],
-  ["/docs/configuration", "Configuration", "Configure BotStopper with Docker Compose, optional challenge and error titles, and a local example deployment."],
-  ["/docs/customization", "Customization", "Customize BotStopper with trusted overlay folders, CSS, fonts, images, and tenant-specific assets."],
-  ["/docs/extensions/headless", "Headless browser detection", "Configure headless browser detection with client hints, Fetch Metadata, policy rules, metrics, and known limits."],
-  ["/docs/challenges/soteria", "Soteria", "Learn how the experimental Soteria WebAssembly challenge works, its browser requirements, and safe difficulty settings."],
-  ["/docs/upgrades", "Proxy and service upgrades", "Review BotStopper upgrade notes for automatic SNI connection pools and systemd instance socket paths."],
-] as const;
+function documents(directory = path.join(process.cwd(), "content", "docs"), segments: string[] = []): { route: string; title: string; description: string }[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    if (entry.isDirectory()) return documents(path.join(directory, entry.name), [...segments, entry.name]);
+    if (!entry.name.endsWith(".mdx")) return [];
+    const source = readFileSync(path.join(directory, entry.name), "utf8");
+    const frontmatter = source.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+    const metadata = frontmatter ? parse(frontmatter[1]) : {};
+    const name = entry.name.slice(0, -4);
+    const slug = [...segments, ...(name === "index" ? [] : [name])].join("/");
+    return [{ route: `/docs${slug ? `/${slug}` : ""}`, title: metadata.title, description: metadata.description }];
+  });
+}
 
-test("documentation frontmatter drives page, Open Graph, Twitter, and social image metadata", async ({ page, request }) => {
-  for (const [path, title, description] of documents) {
-    await page.goto(path);
+const docs = documents();
 
-    await expect(page).toHaveTitle(`${title} | BotStopper documentation`);
+for (const { route, title, description } of docs) {
+  test(`frontmatter drives SEO metadata: ${route}`, async ({ page, request }) => {
+    expect(title).toEqual(expect.any(String));
+    expect(description).toEqual(expect.any(String));
+    expect(description.trim()).not.toBe("");
+    await page.goto(route);
+    const fullTitle = `${title} | BotStopper documentation`;
+    await expect(page).toHaveTitle(fullTitle);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", description);
-    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", `${title} | BotStopper documentation`);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", fullTitle);
     await expect(page.locator('meta[property="og:description"]')).toHaveAttribute("content", description);
-    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", `https://botstopper.net${path}`);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", `https://botstopper.net${route}`);
     await expect(page.locator('meta[property="og:type"]')).toHaveAttribute("content", "website");
     await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute("content", "BotStopper from Techaro");
-    await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute("content", `${title} | BotStopper documentation`);
+    await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute("content", fullTitle);
     await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute("content", description);
-    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", new RegExp(`/social/docs${path === "/docs" ? "" : path.slice("/docs".length)}$`));
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `https://botstopper.net${path}`);
-
-    const image = await request.get(`/social/docs${path === "/docs" ? "" : path.slice("/docs".length)}`);
+    const socialRoute = `/social${route}`;
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", `https://botstopper.net${socialRoute}`);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `https://botstopper.net${route}`);
+    const image = await request.get(socialRoute);
     expect(image.status()).toBe(200);
     expect(image.headers()["content-type"]).toContain("image/png");
+  });
+}
+
+test("agent indexes use every document's frontmatter description", async ({ request }) => {
+  for (const route of ["/llms.txt", "/docs/llms.txt"]) {
+    const response = await request.get(route);
+    expect(response.status()).toBe(200);
+    const body = await response.text();
+    for (const doc of docs) {
+      expect(body).toContain(`[${doc.title}](https://botstopper.net${doc.route}.md): ${doc.description}`);
+    }
   }
 });

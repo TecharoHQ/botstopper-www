@@ -1,3 +1,8 @@
+---
+title: "Caddy reverse proxy setup"
+description: "Place BotStopper behind Caddy so Caddy terminates TLS and forwards requests for filtering before they reach your backend."
+---
+
 # Caddy
 
 Place BotStopper between Caddy and your backend. Caddy terminates TLS, then sends requests to BotStopper for filtering:

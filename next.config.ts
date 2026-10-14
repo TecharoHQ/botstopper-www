@@ -31,9 +31,12 @@ const nextConfig: NextConfig = {
     // manages the Vary header on document responses itself; the markdown
     // route handler sets Vary: Accept on its own responses.)
     const linkSitemap = { key: "Link", value: '</sitemap.xml>; rel="sitemap"' };
+    // Markdown responses supply their own Link header, including a canonical.
+    const htmlOnly = [{ type: "header" as const, key: "accept", value: ".*text/markdown.*" }];
     return [
       {
         source: "/",
+        missing: htmlOnly,
         headers: [
           {
             key: "Link",
@@ -41,12 +44,12 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      { source: "/docs", headers: [linkSitemap] },
-      { source: "/docs/:path*", headers: [linkSitemap] },
-      { source: "/pricing", headers: [linkSitemap] },
-      { source: "/about", headers: [linkSitemap] },
-      { source: "/contact", headers: [linkSitemap] },
-      { source: "/privacy", headers: [linkSitemap] },
+      { source: "/docs", missing: htmlOnly, headers: [linkSitemap] },
+      { source: "/docs/:path((?!.*\\.md$).*)", missing: htmlOnly, headers: [linkSitemap] },
+      { source: "/pricing", missing: htmlOnly, headers: [linkSitemap] },
+      { source: "/about", missing: htmlOnly, headers: [linkSitemap] },
+      { source: "/contact", missing: htmlOnly, headers: [linkSitemap] },
+      { source: "/privacy", missing: htmlOnly, headers: [linkSitemap] },
     ];
   },
   experimental: {
