@@ -174,6 +174,16 @@ export function AnubisRequestFlow() {
           return;
         }
 
+        model.traverse((object) => {
+          if (!(object instanceof THREE.Mesh)) return;
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          for (const material of materials) {
+            material.transparent = true;
+            material.opacity = 0.5;
+            material.needsUpdate = true;
+          }
+        });
+
         const bounds = new THREE.Box3().setFromObject(model);
         const sphere = bounds.getBoundingSphere(new THREE.Sphere());
         model.position.sub(sphere.center);
@@ -255,23 +265,23 @@ export function AnubisRequestFlow() {
   return (
     <figure className="anubis-request-flow" aria-labelledby="anubis-flow-caption">
       <figcaption id="anubis-flow-caption">
-        A request passes through the load balancer and Anubis before it reaches your app.
+        A request passes through the load balancer and BotStopper before it reaches your app.
       </figcaption>
       <div className="anubis-flow-visual">
         <div className="anubis-flow-scene" ref={sceneRef} aria-hidden="true" />
         <ol className="anubis-flow-stages" aria-label="Request path">
           <li className="anubis-flow-stage" ref={(node) => { stageRefs.current[0] = node; }}><span className="anubis-flow-kicker">REQUESTS FROM</span><strong>Outside world</strong></li>
           <li className="anubis-flow-stage" ref={(node) => { stageRefs.current[1] = node; }}><span className="anubis-flow-kicker">FIRST STOP</span><strong>Load balancer <small>/ TLS terminator</small></strong></li>
-          <li className="anubis-flow-stage anubis-flow-gate" ref={(node) => { stageRefs.current[2] = node; }}><span className="anubis-flow-kicker">INSPECTS EACH REQUEST</span><strong>Anubis</strong><small>BotStopper</small></li>
+          <li className="anubis-flow-stage anubis-flow-gate" ref={(node) => { stageRefs.current[2] = node; }}><span className="anubis-flow-kicker">INSPECTS EACH REQUEST</span><strong>BotStopper</strong></li>
           <li className="anubis-flow-stage" ref={(node) => { stageRefs.current[3] = node; }}><span className="anubis-flow-kicker">ALLOWED TRAFFIC</span><strong>Your app</strong></li>
         </ol>
       </div>
       <div className="anubis-flow-outcomes" aria-hidden="true">
-        <span className="anubis-flow-blocked"><b>×</b> about 30% blocked</span>
-        <span className="anubis-flow-allowed">about 70% continue to your app <b>→</b></span>
+        <span className="anubis-flow-blocked"><b aria-hidden="true">×</b> Bot requests blocked</span>
+        <span className="anubis-flow-allowed">Allowed requests continue <b>→</b></span>
       </div>
       <p className="anubis-flow-description">
-        Anubis checks requests between your load balancer and app. In this illustration, about 3 in 10 stop at Anubis; the rest continue to your app.
+        BotStopper checks requests between your load balancer and app. It blocks some bot requests and allows others to continue to your app.
       </p>
     </figure>
   );

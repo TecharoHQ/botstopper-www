@@ -38,7 +38,7 @@ test("clipboard errors offer a manual fallback", async ({ page }) => {
 });
 
 test("nested MDX guides retain their Markdown endpoints and agent indexes", async ({ page, request }) => {
-  for (const [slug, title] of [["anubis", "What is Anubis?"], ["challenges/soteria", "Soteria"], ["extensions/headless", "Headless browser detection"]]) {
+  for (const [slug, title] of [["anubis", "What is BotStopper?"], ["challenges/soteria", "Soteria"], ["extensions/headless", "Headless browser detection"]]) {
     await page.goto("/docs");
     await page.locator(`.markdown-content a[href="/docs/${slug}"]`).click();
     await expect(page).toHaveURL(`/docs/${slug}`);
@@ -58,4 +58,40 @@ test("nested MDX guides retain their Markdown endpoints and agent indexes", asyn
     await page.goto(`/${name}`);
     await expect(page.locator(".markdown-content > h1")).toBeVisible();
   }
+});
+
+test("Soteria explains its four sample lanes and respects motion preferences", async ({ page, request }) => {
+  const runtimeErrors: Error[] = [];
+  page.on("pageerror", (error) => runtimeErrors.push(error));
+
+  const response = await request.get("/docs/challenges/soteria");
+  expect(response.status()).toBe(200);
+  const html = await response.text();
+  expect(html).toContain("Illustrative sample data, not a live challenge.");
+  expect(html).toContain("10000000");
+
+  await page.goto("/docs/challenges/soteria");
+  const lanes = page.locator(".soteria-lanes");
+  await expect(lanes.locator(":scope > li")).toHaveCount(4);
+  await expect(lanes).toHaveAttribute("data-frame", "0");
+  await expect(page.getByRole("meter")).toHaveCount(4);
+  await expect(page.getByText("Leading zero bits").first()).toBeVisible();
+
+  await expect(lanes).toHaveAttribute("data-frame", "1", { timeout: 3000 });
+  await expect(page.getByText("Solution").first()).toBeVisible();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(lanes).toHaveAttribute("data-frame", "0");
+  await page.waitForTimeout(1800);
+  await expect(lanes).toHaveAttribute("data-frame", "0");
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(lanes).toHaveAttribute("data-frame", "1", { timeout: 3000 });
+  await page.setViewportSize({ width: 375, height: 812 });
+  const hasNoVisualizerOverflow = await page.locator(".soteria-lane-visualizer").evaluate((element) => element.scrollWidth <= element.clientWidth);
+  expect(hasNoVisualizerOverflow).toBe(true);
+  const mobileColumns = await lanes.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length);
+  expect(mobileColumns).toBe(1);
+
+  await page.goto("/docs");
+  expect(runtimeErrors).toEqual([]);
 });
