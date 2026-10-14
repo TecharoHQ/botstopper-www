@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
-import ApertureModel from "./aperture-model";
+import LaserBotModel from "./laser-bot-model";
 
 const features = [
   {
@@ -266,12 +266,13 @@ export default function Home() {
         <section className="intro-section section-pad">
           <div className="container intro-grid">
             <div className="intro-visual">
-              <p className="eyebrow">THE BOTSTOPPER APPROACH</p>
-              <ApertureModel />
+              <p className="eyebrow">BOTSTOPPER IN ACTION</p>
+              <LaserBotModel />
+              <p className="model-caption">Automated traffic meets a challenge. People get through.</p>
             </div>
             <div>
-              <h2>Keep your front door open.<br /><span>Keep the bots guessing.</span></h2>
-              <p className="section-lede">BotStopper brings the practical, open source approach of Anubis to teams that need a polished way to manage scraping and automated traffic.</p>
+              <h2>Challenge automation.<br /><span>Let people through.</span></h2>
+              <p className="section-lede">BotStopper checks request signals and adds a challenge when traffic looks automated. People who pass continue to your site, while abusive bots have to work harder.</p>
             </div>
           </div>
         </section>
