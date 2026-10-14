@@ -1,0 +1,63 @@
+# BotStopper vs Cloudflare WAF
+
+BotStopper fits teams that want to operate scraper protection in infrastructure they choose. Cloudflare fits teams that want bot controls within a managed edge platform. The right Cloudflare comparison depends on the bot product and subscription.
+
+Techaro builds BotStopper, a commercial layer on Anubis. This page compares documented architecture and features; it is not a benchmark.
+
+## Side by side
+
+| Question | BotStopper | Cloudflare |
+| --- | --- | --- |
+| Where does protection run? | A proxy that you deploy before the application | Cloudflare's managed edge for proxied traffic |
+| What handles scraping? | Anubis policies and challenges, with BotStopper extensions | Bot Fight Mode, Super Bot Fight Mode, or Enterprise Bot Management |
+| What handles application exploits? | Plan a separate WAF layer where required | WAF custom rules, rate limiting, and managed rules; availability depends on the plan |
+| Can approved automation bypass challenges? | Explicit policies for trusted traffic | Depends on the bot product; Super Bot Fight Mode supports Skip exceptions |
+| What do operators maintain? | Deployment, updates, policy, monitoring, and origin access | Routing, origin access, rules, exceptions, and subscription scope |
+
+BotStopper's [installation](/docs/installation.md) and [configuration](/docs/configuration.md) describe its deployment. Cloudflare documents [WAF availability](https://developers.cloudflare.com/waf/) and its [bot products](https://developers.cloudflare.com/bots/).
+
+## Four different Cloudflare products
+
+**Cloudflare WAF** filters requests through application security rules. Free includes a Free Managed Ruleset, custom rules, and limited rate limiting. Broader managed rules and advanced features depend on the subscription. WAF availability does not imply Enterprise bot scoring. [WAF documentation](https://developers.cloudflare.com/waf/)
+
+**Bot Fight Mode** is free and applies across a domain. Its challenges require CPU calculations, so computational work is not exclusive to BotStopper. WAF custom rules cannot skip Bot Fight Mode. Cloudflare warns that it can challenge API and mobile app traffic. [Bot Fight Mode](https://developers.cloudflare.com/bots/get-started/bot-fight-mode/)
+
+**Super Bot Fight Mode** adds bot categories, analytics, and exceptions through WAF custom rules with the Skip action. It comes with Pro, Business, and Enterprise subscriptions without the Bot Management add-on. These exceptions help preserve approved automation. [Super Bot Fight Mode](https://developers.cloudflare.com/bots/get-started/super-bot-fight-mode/)
+
+**Enterprise Bot Management** is a paid add-on. It exposes a per-request bot score from 1 to 99 for custom rules or Workers. This supports different decisions for public articles and login routes. [Enterprise Bot Management](https://developers.cloudflare.com/bots/get-started/bot-management/)
+
+## Deployment and operation
+
+BotStopper uses the shared Anubis policy engine. Operators select which requests pass, receive challenges, or face denial. [Anubis policies](https://anubis.techaro.lol/docs/admin/policies)
+
+Its optional [headless detector](/docs/extensions/headless.md) requires HTTPS, WebAssembly, and correct proxy headers. Detector downloads must reach BotStopper rather than a CDN cache. [soteria](/docs/challenges/soteria.md) is experimental and requires WebAssembly SIMD. These requirements affect visitor compatibility.
+
+A proxy near the origin receives traffic through that network before it makes a decision. Upstream capacity and flood protection therefore need separate planning. Cloudflare changes the traffic path through its edge, but operators still need origin access controls and policy maintenance.
+
+## Crawler access and SEO
+
+Useful automation needs an explicit policy. A user-agent string alone does not establish crawler identity. Google publishes network ranges and a DNS verification procedure. [Google crawler verification](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests)
+
+Cloudflare maintains [verified bot identities](https://developers.cloudflare.com/bots/concepts/bot/verified-bots/) and separate AI controls for Search, Agent, and Training purposes. Crawler purpose and crawler identity are different decisions. [AI bot controls](https://developers.cloudflare.com/bots/additional-configurations/block-ai-bots/)
+
+For either deployment, check that approved crawlers receive the full article, canonical metadata, and required resources. A successful HTTP status or preview metadata alone does not establish content delivery. Check monitoring clients, feeds, APIs, and restricted browsers too. Neither architecture guarantees search rankings.
+
+## Full cost scope
+
+BotStopper's published subscription is **US$50 per month through GitHub Sponsors**. Hosting, bandwidth, storage, monitoring, updates, and operator time belong in the deployment estimate. Confirm managed deployment and support scope with Techaro. [BotStopper pricing](/pricing)
+
+Cloudflare lists Free at $0, Pro at $25 monthly or $20 per month with annual billing, and Business at $250 or $200 respectively. Enterprise Bot Management requires separate entitlement. Include each domain, paid services, log storage, origin infrastructure, and rule maintenance in the estimate. [Cloudflare pricing](https://www.cloudflare.com/plans/), [billing scope](https://developers.cloudflare.com/billing/understand/how-billing-works/)
+
+## When each fits
+
+BotStopper fits a requirement for locally operated scraper policies and challenge customization. Cloudflare fits an existing edge deployment or a requirement for managed delivery and application security. A combined design needs checks for duplicate challenges, client IP handling, and cache behavior.
+
+## FAQ
+
+### Does Cloudflare offer free WAF protection?
+
+Yes. Free includes limited WAF capabilities and the Free Managed Ruleset. Product limits still matter.
+
+## Related documentation
+
+[All comparisons](/docs/comparisons.md) · [Configuration](/docs/configuration.md) · [Installation](/docs/installation.md) · [Headless detection](/docs/extensions/headless.md) · [soteria](/docs/challenges/soteria.md)

@@ -1,0 +1,41 @@
+# Comparisons
+
+Compare BotStopper with WAFs and bot management products by deployment, request policies, crawler access, visitor requirements, and operating costs.
+
+BotStopper is a layer on top of Anubis. The Anubis documentation describes its shared policies and challenge engine. BotStopper adds features such as [headless browser detection](/docs/extensions/headless.md) and the experimental [Soteria challenge](/docs/challenges/soteria.md).
+
+Techaro builds BotStopper. These pages compare documented capabilities and architectural fit. They do not report benchmarks or rank detection accuracy. Product features, prices, and deployment requirements can change.
+
+## Choose a comparison
+
+| Comparison | Decision it helps you make |
+| --- | --- |
+| [BotStopper vs Cloudflare WAF](/docs/comparisons/cloudflare-waf.md) | Compare a local scraper control layer with Cloudflare WAF and its distinct bot products. |
+| [BotStopper vs AWS WAF](/docs/comparisons/aws-waf.md) | Compare deployment paths, Common and Targeted Bot Control, and the full charging model. |
+| [BotStopper vs Google Cloud Armor](/docs/comparisons/google-cloud-armor.md) | Decide whether local scraper policies or Google Cloud policies with reCAPTCHA fit your architecture. |
+| [BotStopper vs CrowdSec](/docs/comparisons/crowdsec.md) | Compare scraper challenges with CrowdSec's security engine, AppSec, and remediation components. |
+| [BotStopper vs ModSecurity](/docs/comparisons/modsecurity.md) | Understand where scraper access control and payload inspection complement each other. |
+| [BotStopper vs DataDome](/docs/comparisons/datadome.md) | Compare locally operated policies with a specialist commercial bot platform and its connectors. |
+| [BotStopper vs HUMAN](/docs/comparisons/human.md) | Compare scraper defenses with HUMAN Bot Defender's managed bot policies and integration requirements. |
+
+DataDome and HUMAN are separate vendors. Each has its own comparison page.
+
+## Define the protection you need
+
+A scraper control layer decides who can reach content. A WAF inspects requests for application attacks. A CDN and upstream network protection address delivery and capacity. Products can serve several roles, but the same product label does not establish equivalent protection.
+
+Start with your traffic: public articles, login pages, APIs, mobile applications, and approved crawlers can require different policies. Include visitor friction and operator time in the decision.
+
+## Evaluate crawler access and costs
+
+Useful crawler access requires identity verification and an explicit policy. Inspect article content and metadata through the protected endpoint. A challenge page with a successful status code does not prove successful content delivery.
+
+Compare costs for the same workload. Include subscriptions, inspected requests, challenges, hosting, bandwidth, logs, storage, support, and operator time. Anubis is free and open source, with fewer features than BotStopper. BotStopper adds [headless browser detection](/docs/extensions/headless.md) and the [Soteria challenge](/docs/challenges/soteria.md) for [US$50 per month](/pricing).
+
+## Start with BotStopper
+
+- [What is BotStopper?](/docs.md)
+- [Installation](/docs/installation.md)
+- [Configuration](/docs/configuration.md)
+- [Headless browser detection](/docs/extensions/headless.md)
+- [Soteria challenge](/docs/challenges/soteria.md)

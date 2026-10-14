@@ -1,0 +1,26 @@
+# preact
+
+The `preact` challenge runs a small JavaScript program in the browser.
+It checks that the client can run JavaScript through [Preact](https://www.npmjs.com/package/preact), a lightweight framework similar to React.
+
+The browser calculates a SHA-256 response and waits before it submits the result.
+Each unit of `difficulty` adds 125 milliseconds to the browser timer.
+The server requires at least 80 milliseconds per unit before it accepts the result.
+
+## Configuration
+
+Add a browser rule to the `bots` list:
+
+```yaml
+bots:
+  - name: generic-browser
+    expression: userAgent.matches("Mozilla|Opera")
+    action: CHALLENGE
+    challenge:
+      algorithm: preact
+      difficulty: 1
+```
+
+The expression matches a User-Agent that contains `Mozilla` or `Opera`.
+See [policies](/docs/policies.md) for rule order and actions.
+See [expressions](/docs/configuration/expressions.md) for other match conditions.

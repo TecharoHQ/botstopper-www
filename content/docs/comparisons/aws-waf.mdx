@@ -1,0 +1,70 @@
+# BotStopper vs AWS WAF
+
+BotStopper fits teams that want to deploy scraper protection near their application. AWS WAF Bot Control fits teams that want managed bot rules on a supported AWS delivery path. A non-AWS origin can use that path through CloudFront.
+
+Techaro builds BotStopper, a commercial layer on Anubis. This page compares documented architecture and features; it is not a benchmark.
+
+## Side by side
+
+| Question | BotStopper | AWS WAF and Bot Control |
+| --- | --- | --- |
+| Deployment | A proxy that you deploy before the application | A web ACL on a supported resource, including CloudFront and Application Load Balancer |
+| General application security | Plan a separate WAF layer where required | Custom rules and managed application security rules |
+| Bot protection | Anubis policies and challenges, plus BotStopper extensions | A separately charged Bot Control managed rule group |
+| Bot detection choices | Operator policies, optional headless detection, and challenge selection | Common or Targeted inspection |
+| Exceptions | Explicit policies for approved traffic | Scope-down statements, rule overrides, and custom rules using labels |
+| Cost model | Commercial subscription plus deployment costs | Web ACLs, rules, requests, bot inspection, and associated services |
+
+See [BotStopper installation](/docs/installation.md), [supported AWS WAF resources](https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html), and [CloudFront origins](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html).
+
+## WAF, Common, and Targeted are different scopes
+
+Base AWS WAF supplies request filtering. Bot Control adds managed classification, labels, and bot rules with additional fees.
+
+**Common Bot Control** identifies self-declared bots and high-confidence signatures. It also verifies generally desirable bots. **Targeted Bot Control** adds browser interrogation, fingerprinting, behavior heuristics, and optional machine learning for bots that do not identify themselves. Custom rules can use bot labels. [AWS Bot Control](https://docs.aws.amazon.com/waf/latest/developerguide/waf-bot-control.html)
+
+BotStopper uses the shared Anubis policy engine and proof-of-work challenges. Its optional [headless extension](/docs/extensions/headless.md) examines browser automation signals. [soteria](/docs/challenges/soteria.md) provides an experimental challenge implementation. This feature description does not establish equivalent detection accuracy between products. [Anubis policies](https://anubis.techaro.lol/docs/admin/policies)
+
+## Deployment and operation
+
+AWS WAF attaches to supported AWS resources rather than an arbitrary server directly. CloudFront supports custom HTTP origins outside AWS, so the origin does not need to migrate to AWS. [CloudFront origin documentation](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html)
+
+AWS recommends an initial Count configuration and traffic review before enforcement. Targeted rules can introduce browser challenges and CAPTCHA. Applications and approved automation need exceptions and compatible token handling. Managed rules still require policy maintenance. [Bot Control deployment guide](https://docs.aws.amazon.com/waf/latest/developerguide/waf-bot-control-deploying.html)
+
+BotStopper operators maintain the service, updates, state, and policy. The headless extension requires HTTPS and WebAssembly. Proxies must preserve required headers and deliver detector requests to BotStopper. Soteria requires WebAssembly SIMD. These requirements need browser compatibility checks before rollout. [Configuration](/docs/configuration.md)
+
+In either design, origin access controls prevent a direct path around the protection. A local proxy also needs sufficient upstream network capacity; its challenge policy does not remove traffic before that traffic reaches its network.
+
+## Crawler access and SEO
+
+Bot Control distinguishes bot identity and category through labels. Its current Web Bot Authentication support requires an explicitly selected rule version 4.0 or later. This identity feature does not imply that every crawler participates. [Bot Control identity documentation](https://docs.aws.amazon.com/waf/latest/developerguide/waf-bot-control.html)
+
+BotStopper shares Anubis crawler policies, but the active policy determines access. Google documents network and DNS checks for crawler identity. A claimed Googlebot user-agent alone is insufficient. [Google crawler verification](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests)
+
+For both products, check representative article bodies, canonical metadata, and loaded resources from approved crawler requests. Also check APIs, feeds, preview clients, and uptime monitors. An HTTP success status alone does not establish that the origin content reached the client. Neither product guarantees indexing or rankings.
+
+## Full cost scope
+
+BotStopper's published subscription is **US$50 per month through GitHub Sponsors**. Add hosting, bandwidth, storage, updates, monitoring, and operator time. Confirm managed deployment and support scope with Techaro. [BotStopper pricing](/pricing)
+
+AWS's published example rates are $5 per web ACL monthly, $1 per rule monthly, and $0.60 per million requests. Common Bot Control adds $10 per ACL and $1 per million inspected requests beyond 10 million included requests. Targeted adds $10 per ACL and $10 per million beyond one million included requests. [AWS WAF pricing](https://aws.amazon.com/waf/pricing/)
+
+For one ACL, seven custom rules, one Bot Control group, and 20 million requests, base WAF costs $25. Common totals $45 if it inspects all requests. Limiting bot inspection to half reduces that total to $35. Targeted totals $225 if it inspects all requests under those assumptions. These illustrations exclude delivery, logs, capacity surcharges, extra body inspection, challenges, and other services. [AWS pricing examples](https://aws.amazon.com/waf/pricing/)
+
+## When each fits
+
+AWS fits an existing CloudFront or supported AWS application path with managed security requirements. BotStopper fits locally operated scraper policies and challenge customization. Compare the exact traffic scope and operational responsibility before selecting either.
+
+## FAQ
+
+### Must my origin run on AWS?
+
+No. CloudFront can connect AWS WAF to a non-AWS HTTP origin.
+
+### Does base AWS WAF include Bot Control?
+
+No. Bot Control has separate inspection choices and charges.
+
+## Related documentation
+
+[All comparisons](/docs/comparisons.md) · [Configuration](/docs/configuration.md) · [Installation](/docs/installation.md) · [Headless detection](/docs/extensions/headless.md) · [soteria](/docs/challenges/soteria.md)

@@ -1,12 +1,64 @@
-# BotStopper documentation
+import { AnubisRequestFlow } from "@/components/docs/anubis-request-flow";
+import { ChallengeMethodsCard } from "@/components/docs/challenge-methods-card";
 
-[The upstream Anubis documentation](https://anubis.techaro.lol/docs) covers the shared features.
-These guides describe the additions and changes in BotStopper.
+# BotStopper
 
-- [What is BotStopper?](/docs/introduction.md): the upstream project BotStopper builds on, its proof-of-work challenge, and its tradeoffs.
-- [Installation](/docs/installation.md): binary packages, Docker, Podman, and Kubernetes.
-- [Configuration](/docs/configuration.md): Docker Compose options and the local example.
-- [Customization](/docs/customization.md): overlay folders, CSS, fonts, images, and message titles.
-- [Headless browser detection](/docs/extensions/headless.md): detector configuration, client hints, Fetch Metadata, policies, metrics, and limits.
-- [Soteria challenge](/docs/challenges/soteria.md): the obfuscated virtual machine challenge and its browser requirements.
-- [Proxy and service upgrades](/docs/upgrades.md): TLS connection pools and systemd instance paths.
+BotStopper helps keep your website available to people by controlling automated
+access before requests reach your application. It gives you tools to protect
+public content from AI scrapers and other unwanted automation.
+
+Run BotStopper in infrastructure you choose, in front of your existing website.
+Your team controls access policies, the visitor experience, and the protection
+you apply to different requests.
+
+## Protect your content and your resources
+
+Repeated scraper requests consume bandwidth and application capacity.
+BotStopper evaluates incoming traffic and applies your access rules before it
+reaches the protected application. You can admit approved clients, challenge
+suspicious traffic, and deny unwanted automation.
+
+Browser challenges add work to repeated access. BotStopper also offers headless
+browser detection to identify signs of automation. These tools help you make
+scraping more expensive while preserving access for the visitors you want.
+
+<AnubisRequestFlow />
+
+## Control who gets through
+
+Search crawlers, feed readers, monitoring tools, and API clients have different
+needs. BotStopper gives you policies to treat each group appropriately.
+You decide which automation serves your site and which automation consumes
+resources without your permission.
+
+Policies can vary across your site. Protect public content, make exceptions
+for approved services, and adjust your rules as traffic changes.
+
+## Make the protection yours
+
+Match challenge pages to your website with your own images, fonts, CSS, and
+messages. [Customization](/docs/customization.md) gives visitors a consistent
+experience when they encounter a challenge.
+
+Use [metrics](/docs/policies/metrics.md) and [logs](/docs/policies/logging.md) to
+understand request decisions and operate the service. BotStopper supports
+binary packages, containers, and Kubernetes, so you can fit it into your
+existing deployment process.
+
+<ChallengeMethodsCard />
+
+## Anubis and BotStopper
+
+[Anubis](https://anubis.techaro.lol) is the free, open source version of
+BotStopper. Techaro builds both products, and both share the same policy and
+challenge engine.
+
+BotStopper adds features and support for teams that want more from their
+scraper protection:
+
+- [Headless browser detection](/docs/extensions/headless.md) examines automation signals and makes them available to your access policies.
+- [soteria](/docs/challenges/soteria.md) adds another challenge option for scraper protection.
+- Dedicated support from the team that builds Anubis and BotStopper.
+
+BotStopper costs [US$50 per month](/pricing), paid through GitHub Sponsors.
+Your deployment also needs hosting and ongoing operation.

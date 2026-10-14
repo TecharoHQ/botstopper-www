@@ -1,0 +1,90 @@
+# Open Graph
+
+This page provides detailed information on how to configure [Open Graph tag](https://ogp.me/) passthrough in BotStopper. This enables social previews of resources protected by BotStopper without having to exempt each scraper individually.
+
+## Configuration Options
+
+Open Graph settings are configured in the `openGraph` section of the [Policy File](/docs/policies.md).
+
+```yaml
+openGraph:
+  # Enables Open Graph passthrough
+  enabled: true
+  # Enables the use of the HTTP host in the cache key, this enables
+  # caching metadata for multiple http hosts at once.
+  considerHost: true
+  # How long cached OpenGraph metadata should last in memory
+  ttl: 24h
+  # If set, return these opengraph values instead of looking them up with
+  # the target service.
+  #
+  # Correlates to properties in https://ogp.me/
+  override:
+    # og:title is required, it is the title of the website
+    "og:title": "Techaro Anubis"
+    "og:description": >-
+      Anubis is a Web AI Firewall Utility that helps you fight the bots
+      away so that you can maintain uptime at work!
+    "description": >-
+      Anubis is a Web AI Firewall Utility that helps you fight the bots
+      away so that you can maintain uptime at work!
+```
+### Configuration flags / envvars (old)
+
+Open Graph passthrough used to be configured with configuration flags / environment variables. Reference to these settings are maintained for backwards compatibility's sake.
+
+| Name                     | Description                                               | Type     | Default | Example                       |
+| ------------------------ | --------------------------------------------------------- | -------- | ------- | ----------------------------- |
+| `OG_PASSTHROUGH`         | Enables or disables the Open Graph tag passthrough system | Boolean  | `true`  | `OG_PASSTHROUGH=true`         |
+| `OG_EXPIRY_TIME`         | Configurable cache expiration time for Open Graph tags    | Duration | `24h`   | `OG_EXPIRY_TIME=1h`           |
+| `OG_CACHE_CONSIDER_HOST` | Enables or disables the use of the host in the cache key  | Boolean  | `false` | `OG_CACHE_CONSIDER_HOST=true` |
+
+## Usage
+
+To configure Open Graph tags, you can set the following environment variables, environment file or as flags in your BotStopper configuration:
+
+```sh
+export OG_PASSTHROUGH=true
+export OG_EXPIRY_TIME=1h
+export OG_CACHE_CONSIDER_HOST=false
+```
+
+## Implementation Details
+
+When `OG_PASSTHROUGH` is enabled, BotStopper will:
+
+1. Check a local cache for the requested URL's Open Graph tags.
+2. If a cached entry exists and is still valid, return the cached tags.
+3. If the cached entry is stale or not found, fetch the URL, parse the Open Graph tags, update the cache, and return the new tags.
+
+The cache expiration time is controlled by `OG_EXPIRY_TIME`.
+
+When `OG_CACHE_CONSIDER_HOST` is enabled, BotStopper will include the host in the cache key for Open Graph tags. This ensures that tags are cached separately for different hosts.
+
+When fetching the target, BotStopper forwards the visitor's original host as `X-Forwarded-Host`, mirroring what the normal proxy path sends. This lets backends that resolve their site from that header (e.g. WordPress multisite behind per-instance origin vhosts) serve the correct tags even when `--target-host` is set.
+
+## Example
+
+Here is an example of how to configure Open Graph tags in your BotStopper setup:
+
+```sh
+export OG_PASSTHROUGH=true
+export OG_EXPIRY_TIME=1h
+export OG_CACHE_CONSIDER_HOST=false
+```
+
+With these settings, BotStopper will cache Open Graph tags for 1 hour and pass them through to the challenge page, not considering the host in the cache key.
+
+## When to Enable `OG_CACHE_CONSIDER_HOST`
+
+In most cases, you would want to keep `OG_CACHE_CONSIDER_HOST` set to `false` to avoid unnecessary cache fragmentation. However, there are some scenarios where enabling this option can be beneficial:
+
+1. **Multi-Tenant Applications**: If you are running a multi-tenant application where different tenants are hosted on different subdomains, enabling `OG_CACHE_CONSIDER_HOST` ensures that the Open Graph tags are cached separately for each tenant. This prevents one tenant's Open Graph tags from being served to another tenant's users.
+
+2. **Different Content for Different Hosts**: If your application serves different content based on the host, enabling `OG_CACHE_CONSIDER_HOST` ensures that the correct Open Graph tags are cached and served for each host. This is useful for applications that have different branding or content for different domains or subdomains.
+
+3. **Security and Privacy Concerns**: In some cases, you may want to ensure that Open Graph tags are not shared between different hosts for security or privacy reasons. Enabling `OG_CACHE_CONSIDER_HOST` ensures that the tags are cached separately for each host, preventing any potential leakage of information between hosts.
+
+For more information, refer to the [installation guide](https://anubis.techaro.lol/docs/admin/installation).
+
+See [configuration](/docs/configuration.md) for deployment configuration.

@@ -11,7 +11,7 @@ const features = [
     description:
       "Built by the same team behind Anubis, BotStopper brings its practical approach to automated traffic into a product designed for organizations.",
     icon: "↗",
-    href: "/docs/introduction",
+    href: "/docs",
   },
   {
     number: "02",

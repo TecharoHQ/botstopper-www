@@ -1,0 +1,73 @@
+# BotStopper vs ModSecurity
+
+Choose BotStopper to control scraper access to content. Choose ModSecurity with the OWASP Core Rule Set to inspect requests for application attacks. If your site needs both controls, combine them. BotStopper does not replace payload inspection, and a WAF rule set does not automatically solve scraping of valid public pages.
+
+Techaro builds BotStopper. This page compares architecture and documented features. It is not a performance benchmark or a security effectiveness ranking.
+
+## Side by side
+
+| Decision | BotStopper | ModSecurity with CRS |
+| --- | --- | --- |
+| Main question | Which clients can reach this content? | Does this transaction match application attack rules? |
+| Core mechanism | Request policies and browser challenges | HTTP inspection and rule evaluation |
+| Browser challenge | Proof of work and optional headless detection | A browser challenge is not the central CRS mechanism |
+| Deployment | A service before the upstream application | WAF engine integrated with a web server or proxy |
+| Policy work | Crawler access, challenge selection, and request weights | Rule coverage, anomaly thresholds, and false-positive exclusions |
+| Useful automation | Explicit access policies | Legitimate requests still pass through attack inspection |
+
+[OWASP's WAF overview](https://waf.owasp.org/) separates ModSecurity and Coraza engines from the Core Rule Set. BotStopper uses the Anubis policy engine described in the [upstream policy guide](https://github.com/TecharoHQ/anubis/blob/main/docs/docs/admin/policies.mdx).
+
+## What ModSecurity, Coraza, and CRS do
+
+ModSecurity is a WAF engine. CRS supplies generic attack detection rules for compatible engines, including ModSecurity and Coraza. Those rules address threats such as SQL injection and cross-site scripting. [OWASP WAF projects](https://waf.owasp.org/).
+
+CRS anomaly scoring adds scores from matching rules and compares the total against a threshold. Its request and response decisions are separate. This differs from deciding whether a client can obtain content through a browser challenge. [CRS anomaly scoring](https://coreruleset.org/docs/2-how-crs-works/2-1-anomaly_scoring/).
+
+A scraper can repeatedly fetch an ordinary article without sending an injection payload. This is an architectural reason to consider an additional scraper policy. Conversely, a client that passes BotStopper can still send an attack payload. Both cases explain why the layers complement each other.
+
+## Deployment and operating work
+
+ModSecurity v3 separates its library from web-server connectors. A deployment therefore needs a compatible engine, connector, and rule set. Their releases and configuration must work together. [ModSecurity repository documentation](https://github.com/owasp-modsecurity/ModSecurity).
+
+Coraza is another engine option. It supports SecLang rules and CRS, with several integration choices. Integration maturity varies, so inspect the selected connector before treating engines as interchangeable. [Coraza introduction and integrations](https://www.coraza.io/docs/tutorials/introduction/).
+
+CRS requires application-specific tuning. Legitimate transactions can match generic attack patterns. Its documentation recommends exclusions and warns against direct changes to distributed rules. Keep exclusions narrow enough to preserve inspection elsewhere. [CRS false positives and tuning](https://coreruleset.org/docs/2-how-crs-works/2-3-false-positives-and-tuning/).
+
+BotStopper adds different operating tasks: routing, access policies, challenge difficulty, and visitor compatibility. Its [installation](/docs/installation.md) and [configuration](/docs/configuration.md) guides describe the local service. Updates and logs need attention in both layers.
+
+## Challenges, crawlers, and compatibility
+
+Payload inspection does not require an ordinary browser to solve a CRS proof-of-work challenge. API requests still need compatible body handling and rules. A false positive can deny an API client or crawler despite valid application behavior.
+
+BotStopper policies can allow selected clients or require a browser challenge. Its optional [headless detector](/docs/extensions/headless.md) requires WebAssembly and HTTPS. The experimental [Soteria challenge](/docs/challenges/soteria.md) requires WebAssembly SIMD. Clients with these features disabled need an appropriate access policy.
+
+Search crawlers, feed readers, webhooks, and monitors need individual treatment. Crawler identity and permission to access content are separate decisions. Google documents [crawler verification](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests) through published IP ranges or DNS checks.
+
+A verified crawler can receive a BotStopper access exception while retaining WAF inspection. Check the actual article, canonical metadata, and required resources through both layers. A successful HTTP status alone does not establish that the intended page reached the client.
+
+## Cost and when to combine them
+
+ModSecurity, Coraza, and CRS are open-source projects. Their software availability does not eliminate connector maintenance, hosting, rule tuning, log storage, or support costs. See the [OWASP project overview](https://waf.owasp.org/).
+
+BotStopper is commercial software built on Anubis. Its published price is US$50 per month through GitHub Sponsors. Include deployment and operator costs as well. See [BotStopper pricing](/pricing).
+
+ModSecurity with CRS fits a requirement for application attack inspection. BotStopper fits a requirement for selective content access and scraper deterrence. A combined deployment needs an explicit request path through both controls.
+
+The correct order depends on your proxy architecture. Check client-address trust, direct-origin bypasses, and logs from each layer. Keep challenge responses and cookies compatible with caching. Neither local component provides upstream capacity against a network flood.
+
+## FAQ
+
+### Can I remove ModSecurity after installing BotStopper?
+
+BotStopper does not provide equivalent CRS payload inspection. Keep that requirement in your architecture before removing a WAF.
+
+### Does CRS stop every scraper?
+
+No such result follows from its documented attack rules. Scraping can use requests that contain no exploit payload.
+
+## Related guides
+
+- [Bot protection comparisons](/docs/comparisons.md)
+- [What is BotStopper?](/docs.md)
+- [Configuration](/docs/configuration.md)
+- [Headless browser detection](/docs/extensions/headless.md)

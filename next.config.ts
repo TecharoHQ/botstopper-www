@@ -4,6 +4,10 @@ import createMDX from "@next/mdx";
 const withMDX = createMDX({
   options: {
     remarkPlugins: ["remark-frontmatter", "remark-gfm"],
+    rehypePlugins: [
+      ["rehype-mermaid", { strategy: "pre-mermaid" }],
+      ["rehype-pretty-code", { theme: "github-dark", keepBackground: false, bypassInlineCode: true }],
+    ],
   },
 });
 
@@ -14,6 +18,12 @@ const nextConfig: NextConfig = {
     "/social/docs/**": ["./content/docs/**/*.mdx"],
     "/md/**": ["./content/**/*.md", "./content/docs/**/*.mdx"],
     "/llms.txt": ["./content/docs/**/*.mdx"],
+  },
+  redirects() {
+    return [
+      { source: "/docs/introduction", destination: "/docs", permanent: true },
+      { source: "/docs/introduction.md", destination: "/docs.md", permanent: true },
+    ];
   },
   async headers() {
     // RFC 8288: advertise the sitemap and the markdown twin of each page.

@@ -1,0 +1,145 @@
+# Windows
+
+BotStopper supports Windows as a native system service.
+Download the Windows MSI for your architecture from the [BotStopper releases](https://github.com/TecharoHQ/botstopper/releases).
+The repository requires access to the BotStopper project.
+Windows packages target amd64 (x64) and arm64 (AArch64).
+
+Run the installer with administrator privileges.
+By default, it installs to `C:\Program Files\Techaro\BotStopper` and registers the `BotStopper` service.
+The executable is `bin\botstopper.exe` within that directory.
+
+## First-time setup
+
+A new installation leaves the service stopped and sets its startup type to manual.
+Configure BotStopper before you start it.
+
+The installer creates live configuration in `%ProgramData%\Techaro\BotStopper`, usually `C:\ProgramData\Techaro\BotStopper`:
+
+| File | Purpose |
+| :--- | :------ |
+| `botstopper.env` | Environment variables for the service. |
+| `botstopper.yaml` | Request policies, challenge configuration, storage, and logging. |
+
+Edit `botstopper.env` to set the listening address and the application that BotStopper protects:
+
+```sh
+BIND=:8923
+TARGET=http://localhost:3923
+```
+
+Set `TARGET` to your application's address.
+The installer sets `POLICY_FNAME` to the live `botstopper.yaml` file.
+See [configuration](/docs/configuration.md) and [policy configuration](/docs/policies.md) for the available configuration.
+
+### Persistent signing key
+
+Set `ED25519_PRIVATE_KEY_HEX` to a random 32-byte Ed25519 seed, encoded as exactly 64 hexadecimal characters.
+Without this value, BotStopper generates a new key on every start and invalidates existing challenges and authentication cookies.
+
+Generate the seed with PowerShell 7:
+
+```powershell
+[Convert]::ToHexString([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+```
+
+For Windows PowerShell 5.1, use:
+
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+try {
+    $rng.GetBytes($bytes)
+    [System.BitConverter]::ToString($bytes).Replace('-', '').ToLowerInvariant()
+} finally {
+    $rng.Dispose()
+}
+```
+
+Set `ED25519_PRIVATE_KEY_HEX` in the service environment or in `botstopper.env`.
+Use the generated value, with no spaces or separators.
+
+The configuration directory inherits permissions from `%ProgramData%`.
+On a standard Windows installation, local users can read those files.
+For machines with multiple users, supply the signing key through the service environment instead of the file.
+
+### Start the service
+
+After configuration, start BotStopper from an administrator PowerShell session:
+
+```powershell
+Start-Service BotStopper
+```
+
+Enable startup at boot:
+
+```powershell
+Set-Service BotStopper -StartupType Automatic
+```
+
+### Choose an installation directory
+
+Use the `INSTALLDIR` property to select a different location.
+Replace the example MSI filename with the downloaded file:
+
+```powershell
+msiexec /i ".\techaro-botstopper-VERSION-windows-amd64.msi" INSTALLDIR="D:\BotStopper"
+```
+
+Changing `INSTALLDIR` does not change the live configuration directory.
+The service still reads `%ProgramData%\Techaro\BotStopper`.
+
+### Silent installation
+
+Pass `/qn` to install without the graphical interface:
+
+```powershell
+msiexec /i ".\techaro-botstopper-VERSION-windows-amd64.msi" /qn INSTALLDIR="D:\BotStopper"
+```
+
+Configure the service and its signing key before its first start.
+
+## Service account
+
+The service runs as the Windows [virtual account](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-service-accounts#virtual-accounts) `NT SERVICE\BotStopper`.
+Windows creates the account with the service. It does not require a password.
+
+The installer grants this account access to `%ProgramData%\Techaro\BotStopper`.
+The service uses that access to read configuration and write logs.
+Preserve this access when you change directory permissions.
+
+## Logging
+
+BotStopper writes logs to files instead of the Windows Event Viewer.
+The default files are in `%ProgramData%\Techaro\BotStopper`:
+
+| File | Purpose |
+| :--- | :------ |
+| `botstopper.log` | Normal service logs, with automatic rotation. |
+| `botstopper-bootstrap.log` | Configuration setup diagnostics from installation or upgrades. |
+| `botstopper-startup.log` | Early startup logs, before the main logging configuration loads. |
+
+If the installer cannot write its bootstrap log to that directory, it tries the Windows temporary directory.
+
+The default logging configuration keeps three backups, rotates at 100 MiB or seven days, and compresses old logs.
+See [logging configuration](/docs/policies/logging.md) to change these values.
+
+## Upgrades
+
+Install the newer MSI over the existing installation.
+The installer replaces the service and starts the replacement during an upgrade.
+This interrupts traffic while it stops and replaces the service.
+Existing live configuration files remain intact.
+
+The installer resets the startup type to manual.
+After an upgrade, restore startup at boot:
+
+```powershell
+Set-Service BotStopper -StartupType Automatic
+```
+
+## IIS
+
+The [Anubis on IIS guide](https://rentry.co/anubis-on-iis) describes the upstream reverse proxy integration.
+For BotStopper, use the `BotStopper` service, `botstopper.exe`, and the BotStopper configuration paths described here.
+See [subrequest authentication](/docs/configuration/subrequest-auth.md) for another proxy integration approach.

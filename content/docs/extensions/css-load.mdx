@@ -1,0 +1,25 @@
+# CSS loading
+
+The `css-load` extension checks that a client requests a CSS resource from BotStopper. The challenge page imports a test route. BotStopper checks that the client requests that route before it accepts the challenge.
+
+## Configuration
+
+Add `css-load` to the `extensions` list in an existing challenge definition:
+
+```yaml
+thresholds:
+  - name: mild-suspicion
+    expression:
+      all:
+        - weight > 0
+        - weight < 10
+    action: CHALLENGE
+    challenge:
+      algorithm: fast
+      difficulty: 2
+      report_as: 2
+      extensions:
+        - css-load
+```
+
+This example adds the extension to the [fast challenge](/docs/challenges/fast.md). Refer to [thresholds](/docs/configuration/thresholds.md) for challenge selection and [expressions](/docs/configuration/expressions.md) for expression syntax.

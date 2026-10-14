@@ -1,8 +1,42 @@
 # Configuration
 
+BotStopper uses the Anubis policy engine. These guides cover the shared configuration and BotStopper additions.
+
+## Policies and request handling
+
+- [Policies](/docs/policies.md): rule matching, actions, metrics, storage, logging, honeypots, and request weight.
+- [Expressions](/docs/configuration/expressions.md): CEL variables, operators, and rule examples.
+- [Thresholds](/docs/configuration/thresholds.md): select actions and challenges from request weight.
+- [Imports](/docs/configuration/import.md): combine shared rules and local policy files.
+- [Client IP headers](/docs/configuration/client-ip.md): forwarded addresses and proxy configuration.
+- [Default allow behavior](/docs/configuration/default-allow-behavior.md): how unmatched requests pass through the policy engine.
+
+## Challenge methods
+
+- [Fast](/docs/challenges/fast.md)
+- [Argon2id](/docs/challenges/argon2id.md)
+- [HashX](/docs/challenges/hashx.md)
+- [preact](/docs/challenges/preact.md)
+- [meta-refresh](/docs/challenges/meta-refresh.md)
+- [soteria](/docs/challenges/soteria.md)
+
+## Challenge extensions
+
+- [CSS loading](/docs/extensions/css-load.md)
+- [Headless browser detection](/docs/extensions/headless.md)
+
+## Responses and integration
+
+- [Custom status codes](/docs/configuration/custom-status-codes.md)
+- [Open Graph passthrough](/docs/configuration/open-graph.md)
+- [Redirect domains](/docs/configuration/redirect-domains.md)
+- [Content Security Policy](/docs/configuration/content-security-policy.md)
+- [Subrequest authentication](/docs/configuration/subrequest-auth.md)
+- [Imprint and footer](/docs/configuration/impressum.md)
+
 ## Docker compose
 
-Use [the upstream Docker compose directions](https://anubis.techaro.lol/docs/admin/environments/docker-compose) with the following additional options:
+Use the [Docker Compose guide](/docs/installation/docker-compose.md) with the following additional options:
 
 ```diff
    anubis:

@@ -1,0 +1,65 @@
+# BotStopper vs CrowdSec
+
+Choose BotStopper when your main requirement is control over scraper access through local policies and browser challenges. Choose CrowdSec when you want a broader security engine, behavioral decisions, and AppSec request inspection. CrowdSec also offers browser bot detection, so proof of work alone does not distinguish these products.
+
+Techaro builds BotStopper. This page compares documented architecture and features. It is not a benchmark or a bypass evaluation.
+
+## Side by side
+
+| Decision | BotStopper | CrowdSec |
+| --- | --- | --- |
+| Main scope | Scraper policies and challenges, built on Anubis | Security engine, remediation components, and AppSec WAF |
+| Deployment | A service before the upstream website | Engine connected to web servers through remediation components |
+| Browser checks | Proof of work, optional headless detector, experimental Soteria | Alpha Bot Detection with proof of work and device fingerprints |
+| Access after a challenge | Authorization cookie | Access cookie after an accepted challenge |
+| Payload inspection | Keep a separate WAF for application attack rules | AppSec supports WAF rules and behavioral events |
+| Operating work | Proxy routing, policies, updates, and challenge compatibility | Engine, bouncer, rules, scenarios, and component compatibility |
+
+The [CrowdSec AppSec overview](https://docs.crowdsec.net/docs/appsec/intro/) explains the engine and remediation model. [Bot Detection documentation](https://docs.crowdsec.net/docs/appsec/bot_detection/intro/) describes its browser checks. BotStopper's [introduction](/docs.md) explains the shared Anubis foundation.
+
+## Deployment and daily operation
+
+BotStopper runs in front of your website. Its [installation guide](/docs/installation.md) covers packages, containers, and Kubernetes. Container access requires registry authentication. You maintain the service and the route to the upstream application.
+
+Anubis policies are authoritative for BotStopper's shared engine behavior. Policies can allow, deny, challenge, or adjust request weights. The practical work is selecting which traffic needs a challenge and which traffic needs direct access. See the [upstream policy guide](https://github.com/TecharoHQ/anubis/blob/main/docs/docs/admin/policies.mdx).
+
+CrowdSec AppSec receives requests through a compatible remediation component, also called a bouncer. In-band rules can interrupt the current request. Out-of-band events support later behavioral decisions. Installing rules alone is insufficient: acquisition and request forwarding also require configuration. This structure fits teams that want one engine to coordinate multiple servers. [CrowdSec AppSec architecture](https://docs.crowdsec.net/docs/appsec/intro/).
+
+For either deployment, local enforcement still consumes local network capacity. Upstream flood protection is a separate architectural requirement.
+
+## Challenges and browser compatibility
+
+CrowdSec v1.8 still marks Bot Detection as alpha. Configuration and shipped rules can change between releases. Its challenge requires JavaScript and cookies. Its server runtime also has CPU and executable-memory prerequisites. A compatible AppSec bouncer is necessary. [CrowdSec Bot Detection prerequisites](https://docs.crowdsec.net/docs/appsec/bot_detection/intro/).
+
+BotStopper's optional [headless detector](/docs/extensions/headless.md) requires HTTPS, WebAssembly, and correct proxy handling of headers and detector downloads. A browser with WebAssembly disabled cannot pass a policy that requires this extension. [soteria](/docs/challenges/soteria.md) is experimental and requires WebAssembly SIMD.
+
+These requirements affect the choice of challenge. Check mobile browsers, privacy restrictions, and assistive technology against your policy. A completed challenge establishes acceptance under that policy. It does not prove that every accepted client is human.
+
+## Useful crawlers and non-browser clients
+
+CrowdSec ships known-bot and path exclusions in its [Bot Detection defaults](https://docs.crowdsec.net/docs/appsec/bot_detection/whats_included/). Inspect the rules in your deployed version before relying on them.
+
+BotStopper can use Anubis policies to admit selected crawlers. Search indexing, AI training, monitoring, and user-triggered fetches need separate access decisions. A crawler name in a user agent is insufficient identity evidence. Google documents [IP and DNS verification](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests).
+
+APIs, webhooks, and feed readers need policies compatible with their clients. Check the delivered article body and metadata as well as the status code. Neither architecture guarantees indexing or unchanged visitor access.
+
+## Cost and fit
+
+BotStopper's published price is US$50 per month through GitHub Sponsors. It is a commercial layer on Anubis. Include hosting, bandwidth, logs, upgrades, and operator time in the estimate. See [BotStopper pricing](/pricing).
+
+CrowdSec has open-source components and separate commercial services. Its [pricing page](https://www.crowdsec.net/pricing) lists Console Premium, threat intelligence, and support offerings. Price the specific stack you need. Those services are not all mandatory charges for every local installation.
+
+BotStopper fits teams focused on content access and scraper load. CrowdSec fits teams that also need application rules and behavioral remediation. Both can form a layered deployment, but two browser challenge systems add operational work. Check cookies, trusted client addresses, caching, and challenge order before enabling both.
+
+## FAQ
+
+### Does CrowdSec lack proof of work?
+
+No. Its alpha Bot Detection combines proof of work with fingerprints. Compare deployment requirements and policies, rather than treating the challenge type as exclusive.
+
+## Related guides
+
+- [Bot protection comparisons](/docs/comparisons.md)
+- [Configuration](/docs/configuration.md)
+- [Headless browser detection](/docs/extensions/headless.md)
+- [Soteria challenge](/docs/challenges/soteria.md)

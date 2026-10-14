@@ -1,0 +1,34 @@
+# Cloudflare
+
+Configure your ingress to read `CF-Connecting-IP` from trusted Cloudflare proxies. Send that address to BotStopper as both `X-Forwarded-For` and `X-Real-IP`.
+
+The example below trusts Cloudflare's published proxy ranges. Keep this list synchronized with [Cloudflare's IP ranges](https://www.cloudflare.com/ips/).
+
+Overwrite client-supplied IP headers before requests reach BotStopper. Restrict direct access to the origin so requests cannot bypass this configuration. Refer to [client IP headers](/docs/configuration/client-ip.md) for details.
+
+## Caddy configuration
+
+Use this configuration with the [Caddy deployment](/docs/installation/caddy.md). That deployment requires registry credentials to pull the BotStopper image.
+
+```text
+{
+    servers {
+        # Cloudflare IP ranges from https://www.cloudflare.com/en-gb/ips/
+        trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+        # Use CF-Connecting-IP to determine the client IP instead of XFF
+        # https://caddyserver.com/docs/caddyfile/options#client-ip-headers
+        client_ip_headers CF-Connecting-IP
+    }
+}
+
+example.com {
+    reverse_proxy http://anubis:3000 {
+        # Pass the client IP read from CF-Connecting-IP
+        header_up X-Forwarded-For {client_ip}
+        header_up X-Real-IP {client_ip}
+        header_up X-Http-Version {http.request.proto}
+    }
+}
+```
+
+Next, read [configuration](/docs/configuration.md) and [policy definitions](/docs/policies.md).

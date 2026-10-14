@@ -1,0 +1,82 @@
+# Weight Threshold
+
+BotStopper offers the ability to assign "weight" to requests. This is a custom level of suspicion that rules can add to or remove from. For example, here's how you assign 10 weight points to anything that might be a browser:
+
+```yaml
+# botPolicies.yaml
+
+bots:
+  - name: generic-browser
+    user_agent_regex: >-
+      Mozilla|Opera
+    action: WEIGH
+    weight:
+      adjust: 10
+```
+
+Thresholds let you take this per-request weight value and take actions in response to it. Thresholds are defined alongside your bot configuration in `botPolicies.yaml`.
+
+> **Note.**
+> Thresholds DO NOT apply when a request matches a bot rule with the CHALLENGE action. Thresholds only apply when requests don't match any terminal bot rules.
+
+```yaml
+# botPolicies.yaml
+
+bots: ...
+
+thresholds:
+  - name: minimal-suspicion
+    expression: weight < 0
+    action: ALLOW
+
+  - name: mild-suspicion
+    expression:
+      all:
+        - weight >= 0
+        - weight < 10
+    action: CHALLENGE
+    challenge:
+      algorithm: metarefresh
+      difficulty: 1
+
+  - name: moderate-suspicion
+    expression:
+      all:
+        - weight >= 10
+        - weight < 20
+    action: CHALLENGE
+    challenge:
+      algorithm: fast
+      difficulty: 2
+
+  - name: extreme-suspicion
+    expression: weight >= 20
+    action: CHALLENGE
+    challenge:
+      algorithm: fast
+      difficulty: 4
+```
+
+This defines a suite of 4 thresholds:
+
+1. If the request weight is less than zero, allow it through.
+2. If the request weight is greater than or equal to zero, but less than ten: give it [a very lightweight challenge](/docs/challenges/meta-refresh.md).
+3. If the request weight is greater than or equal to ten, but less than twenty: give it [a slightly heavier challenge](/docs/challenges/fast.md).
+4. Otherwise, give it [the heaviest challenge](/docs/challenges/fast.md).
+
+Thresholds can be configured with the following options:
+
+| Field | Description | Example |
+| :---- | :---------- | :------ |
+| `name` | Human-readable threshold name. | `extreme-suspicion` |
+| `expression` | CEL expression that returns a boolean from `weight`. Supports a single expression, `all`, or `any`. | `weight >= 20` |
+| `action` | Terminal action: `ALLOW`, `CHALLENGE`, or `DENY`. | `CHALLENGE` |
+| `challenge` | Required for `CHALLENGE`. Contains the algorithm, difficulty, and any supported extensions. | `algorithm: fast`, `difficulty: 4` |
+
+A range with `weight >= 0` and `weight < 10` includes zero and excludes ten.
+Thresholds run in order. The first matching threshold supplies the action.
+
+See [challenge methods](/docs/configuration.md#challenge-methods) and [extensions](/docs/extensions.md) for challenge configuration.
+
+
+See [configuration](/docs/configuration.md) for deployment configuration.

@@ -1,0 +1,76 @@
+# BotStopper vs HUMAN Bot Defender
+
+Choose BotStopper if your team wants local control over browser challenges and scraper access. Evaluate HUMAN Bot Defender if you want vendor-assisted detection with sensors, enforcement integrations, and mobile SDKs.
+
+Techaro builds BotStopper. This comparison describes documented architecture and product scope, not benchmark results.
+
+BotStopper is a commercial layer on Anubis. The [Anubis policy documentation](https://github.com/TecharoHQ/anubis/blob/main/docs/docs/admin/policies.mdx) is authoritative for shared request rules and challenges. BotStopper adds headless detection, Soteria, and product support. Its subscription is separate from Anubis's open source license.
+
+## Features side by side
+
+| Requirement | BotStopper | HUMAN Bot Defender |
+| --- | --- | --- |
+| Deployment | Local service in front of the application | Sensor plus an Enforcer at a supported edge or origin |
+| Detection approach | Request policies and browser challenges | Sensor signals and risk scores with policy enforcement |
+| Browser automation signals | Optional WebAssembly headless extension | JavaScript sensor |
+| Mobile clients | Challenge compatibility depends on browser capabilities | SDKs for iOS and Android |
+| Crawler access | Operator defines allow and deny policies | Maintained crawler list with configurable rules |
+| Trusted automation | Explicit local exceptions | Access tokens and rules for authorized services |
+| Operations | Operator maintains service and configuration | Vendor assists with configuration. Customer maintains integrations. |
+| Commercial model | US$50/month plus operating costs | Quote required for a comparable price |
+
+HUMAN documents its sensor and Enforcer architecture in [Getting Started with Bot Defender](https://docs.humansecurity.com/applications/getting-started-with-bot-defender). Its [policy guide](https://docs.humansecurity.com/applications/bot-defender-policy-settings) covers crawler rules, access tokens, and rate limits. Its [mobile SDK overview](https://docs.humansecurity.com/applications/mobile-sdk-intro) covers iOS and Android integration.
+
+## Deployment and operations
+
+BotStopper forwards permitted requests to your application. Its [installation guide](/docs/installation.md) covers packages, containers, and Kubernetes. Container access requires registry authentication. Your team owns capacity, upgrades, availability, policy changes, and the surrounding proxy configuration.
+
+Optional browser checks introduce specific constraints. The [headless extension](/docs/extensions/headless.md) requires HTTPS and WebAssembly. It also requires correct header forwarding and detector downloads that reach BotStopper for each challenge. Proxy caching can interfere with these checks. [soteria](/docs/challenges/soteria.md) requires WebAssembly SIMD and remains experimental.
+
+HUMAN's setup guide describes assistance from a Solutions Engineer. Customers integrate a sensor and deploy an Enforcer. The sensor supplies risk information. The Enforcer applies decisions. A sensor alone does not block requests. HUMAN assists with detection configuration after integration, as its [setup guide](https://docs.humansecurity.com/applications/getting-started-with-bot-defender) explains.
+
+Supported deployment paths include several CDNs and origin platforms. Existing infrastructure needs a connector review and configuration work. A managed detection service still requires rollout ownership, compatibility checks, and an incident plan for its enforcement points.
+
+## Abuse scope and crawler access
+
+BotStopper fits access controls for public content and browser scraping. Challenges add work to repeated access. They do not prove that every successful browser belongs to a person. Authorization, application attack inspection, and protection against network floods remain separate requirements.
+
+HUMAN describes Bot Defender as protection for websites, mobile applications, and APIs against automated abuse. This wider client coverage warrants evaluation for mixed application environments. It does not establish equal coverage across every contract or demonstrate comparative effectiveness. See the [Bot Defender overview](https://www.humansecurity.com/learn/resources/human-bot-defender-overview/).
+
+HUMAN maintains a list of known bots and crawlers. Operators can allow or deny individual entries. Its policy documentation also describes access tokens for trusted requests and rate limits for authorized services. These controls deserve a review alongside crawler exceptions. See [Bot Defender policies](https://docs.humansecurity.com/applications/bot-defender-policy-settings).
+
+With BotStopper, your team owns crawler exceptions through local policy. Search indexing, archives, AI training, and user-requested fetches need explicit decisions. A browser challenge can prevent a useful crawler from reading content. Identity alone does not establish permission, and a user agent alone does not establish identity.
+
+## Full operating cost
+
+BotStopper's [published price](/pricing) is US$50 per month through GitHub Sponsors. Include compute, storage, logs, reverse proxies, upgrades, and operator time. The commercial subscription does not eliminate deployment costs.
+
+The reviewed HUMAN materials do not establish a comparable public Bot Defender tariff. Obtain a quote for your protected applications, traffic, support, and required capabilities. Do not import DataDome's tiers or another vendor's request rates into a HUMAN estimate.
+
+Include sensor and Enforcer integration work, mobile release work, policy administration, and incident response. Establish the contract's support commitments, data retention, and any additional product costs. Compare both products against the same traffic and operational requirements.
+
+## When each fits
+
+BotStopper fits teams that can operate a service and prioritize local scraper policies and browser challenges. HUMAN fits teams that want vendor-assisted detection across web and mobile clients with configurable enforcement. This assessment follows the documented architecture. Detection quality, false positives, and client compatibility require an evaluation with your own traffic.
+
+## FAQ
+
+### Is a HUMAN sensor enough to block bots?
+
+No. HUMAN's setup guide distinguishes sensor data collection from Enforcer decisions.
+
+### Can useful crawlers bypass browser challenges?
+
+Explicit access rules can preserve crawler access. The outcome depends on correct identification and policy configuration.
+
+### Does Anubis's license cover a free BotStopper deployment?
+
+BotStopper is a commercial product with a separate subscription. Use its published pricing for your estimate.
+
+## Related documentation
+
+- [Compare bot protection options](/docs/comparisons.md)
+- [Installation](/docs/installation.md)
+- [Configuration](/docs/configuration.md)
+- [Headless browser detection](/docs/extensions/headless.md)
+- [Soteria challenge](/docs/challenges/soteria.md)

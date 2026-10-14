@@ -1,20 +1,8 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import type { ReactNode } from "react";
-import { getDocNav, type DocNavItem } from "@/lib/docs";
+import { getDocNav } from "@/lib/docs";
 import { SiteHeader } from "@/components/site-chrome";
-
-function SidebarItems({ items }: { items: DocNavItem[] }) {
-  return (
-    <ul className="docs-nav-list">
-      {items.map((item) => (
-        <li key={item.id}>
-          {item.href ? <Link href={item.href}>{item.label}</Link> : <span className="docs-nav-group">{item.label}</span>}
-          {item.children.length > 0 && <SidebarItems items={item.children} />}
-        </li>
-      ))}
-    </ul>
-  );
-}
+import { DocsSidebar } from "@/components/docs/sidebar";
 
 export default function DocsLayout({ children }: { children: ReactNode }) {
   const items = getDocNav();
@@ -24,7 +12,9 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
       <div className="docs-layout container">
         <aside className="docs-sidebar" aria-label="Documentation navigation">
           <p className="docs-sidebar-label">DOCUMENTATION</p>
-          <SidebarItems items={items} />
+          <Suspense fallback={<p role="status">Loading navigation...</p>}>
+            <DocsSidebar items={items} />
+          </Suspense>
           <div className="docs-sidebar-callout"><span className="callout-spark">✳</span><p>Built for the open web.</p><a href="http://github.com/sponsors/Xe" target="_blank" rel="noreferrer">Support the work ↗</a></div>
         </aside>
         <main className="docs-main">{children}</main>

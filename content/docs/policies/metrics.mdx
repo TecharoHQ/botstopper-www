@@ -1,0 +1,91 @@
+# Metrics server
+
+BotStopper includes support for [Prometheus-style metrics](https://prometheus.io/docs/introduction/overview/), allowing systems administrators to monitor BotStopper' performance and effectiveness. This is a separate HTTP server with metrics, health checking, and debug routes.
+
+BotStopper' metrics server is configured with the `metrics` block in the configuration file:
+
+```yaml
+metrics:
+  bind: ":9090"
+  network: "tcp"
+```
+
+If you want to bind metrics to a Unix socket, make sure to set the network to `unix` and add a socket mode:
+
+```yaml
+metrics:
+  bind: "/tmp/anubis_metrics.sock"
+  network: unix
+  socketMode: "0700" # must be a string
+```
+
+### Debug routes
+
+BotStopper' metrics server supports [pprof](https://pkg.go.dev/runtime/pprof), the Go standard library tool for profiling Go applications. This is very useful for debugging how BotStopper works in the wild with regards to CPU, multicore, and RAM usage. pprof is very powerful and can expose command line arguments as part of the debugging setup (inside Google, everything is done with command line flags).
+
+Prior versions of BotStopper exposed pprof endpoints on all TCP bindhosts by default. This means that machines with incorrectly configured firewalls can expose command line arguments to the public internet in the right conditions.
+
+In order to enable pprof profiling endpoints on the Metrics server, set the `debug` flag under the `metrics` block:
+
+```yaml
+metrics:
+  bind: ":9090"
+  network: "tcp"
+
+  debug: true
+```
+
+To err on the side of caution, this defaults to disabled. If this defaults migration breaks your configuration, please let us know in a ticket.
+
+### TLS
+
+If you want to serve the metrics server over TLS, use the `tls` block:
+
+```yaml
+metrics:
+  bind: ":9090"
+  network: "tcp"
+
+  tls:
+    certificate: /path/to/tls.crt
+    key: /path/to/tls.key
+```
+
+The certificate and key will automatically be reloaded when the respective files change.
+
+### mTLS
+
+If you want to validate requests to ensure that they use a client certificate signed by a certificate authority (mutual TLS or mTLS), set the `ca` value in the `tls` block:
+
+```yaml
+metrics:
+  bind: ":9090"
+  network: "tcp"
+
+  tls:
+    certificate: /path/to/tls.crt
+    key: /path/to/tls.key
+    ca: /path/to/ca.crt
+```
+
+As it is not expected for certificate authority certificates to change often, the CA certificate will NOT be automatically reloaded when the respective file changes.
+
+### HTTP basic authentication
+
+BotStopper' metrics server also supports setting HTTP basic auth as a lightweight protection against unauthorized users viewing metrics data. As the basic auth credentials are hardcoded in the configuration file, administrators SHOULD use randomly generated credentials, such as type-4 UUIDs or other high entropy strings. These credentials MUST NOT be sensitive or used to protect other high value systems.
+
+Configure it with the `basicAuth` block under `metrics`:
+
+```yaml
+metrics:
+  bind: ":9090"
+  network: "tcp"
+
+  basicAuth:
+    username: azurediamond
+    password: REPLACE_WITH_A_RANDOM_PASSWORD
+```
+
+If you have Python installed, you can generate a high entropy password with `python -c 'import secrets; print(secrets.token_urlsafe(32))'`.
+
+See [policy configuration](/docs/policies.md) for related topics.

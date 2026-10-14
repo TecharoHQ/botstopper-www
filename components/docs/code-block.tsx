@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState, type ComponentProps } from "react";
+import { MermaidDiagram } from "@/components/docs/mermaid-diagram";
 
-export function CodeBlock({ children, ...props }: ComponentProps<"pre">) {
+export function CodeBlock(props: ComponentProps<"pre">) {
+  if (props.className?.split(/\s+/).includes("mermaid") && typeof props.children === "string") {
+    return <MermaidDiagram source={props.children} />;
+  }
+  return <CopyableCodeBlock {...props} />;
+}
+
+function CopyableCodeBlock({ children, ...props }: ComponentProps<"pre">) {
   const code = useRef<HTMLPreElement>(null);
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
 

@@ -1,0 +1,22 @@
+# Custom status codes for BotStopper errors
+
+By default, challenge and denial pages return `HTTP 200`.
+Configure `status_codes` in the [policy file](/docs/policies.md) to change those responses.
+
+```yaml
+status_codes:
+  CHALLENGE: 200
+  DENY: 200
+```
+
+To return forbidden responses for both page types, use:
+
+```yaml
+status_codes:
+  CHALLENGE: 403
+  DENY: 403
+```
+
+For [subrequest authentication](/docs/configuration/subrequest-auth.md), set `DENY: 403` so the proxy does not accept a denial as successful authentication.
+
+See [configuration](/docs/configuration.md) for deployment configuration.
