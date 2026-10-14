@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 
-export default function ApertureModel() {
+export default function LaserBotModel() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,11 +34,18 @@ export default function ApertureModel() {
       light.position.set(-3, 4, 6);
       scene.add(light);
 
-      let model: import("three").Group | undefined = undefined;
-      let pivot: import("three").Group | undefined = undefined;
-      let mixer: import("three").AnimationMixer | undefined = undefined;
-      let resizeObserver: ResizeObserver | undefined = undefined;
-      let visibilityObserver: IntersectionObserver | undefined = undefined;
+      // These are assigned once after the model finishes loading and used by cleanup.
+      // eslint-disable-next-line prefer-const
+      let model: import("three").Group | undefined;
+      // eslint-disable-next-line prefer-const
+      let pivot: import("three").Group | undefined;
+      // eslint-disable-next-line prefer-const
+      let mixer: import("three").AnimationMixer | undefined;
+      let dissolveUniform: { value: number } | undefined;
+      // eslint-disable-next-line prefer-const
+      let resizeObserver: ResizeObserver | undefined;
+      // eslint-disable-next-line prefer-const
+      let visibilityObserver: IntersectionObserver | undefined;
       const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
       let visible = false;
       let previousTime: number | undefined;
@@ -46,15 +53,17 @@ export default function ApertureModel() {
       let targetYaw = 0;
       let pitch = 0;
       let yaw = 0;
+      const basePitch = -0.55;
+      const baseYaw = 0.28;
       const applyTilt = () => {
         if (!pivot) return;
-        pivot.rotation.x = Math.PI / 2 + pitch;
-        pivot.rotation.z = yaw;
+        pivot.rotation.x = Math.PI / 2 + basePitch + pitch;
+        pivot.rotation.z = baseYaw + yaw;
       };
       const handlePointerMove = (event: PointerEvent) => {
         const bounds = container.getBoundingClientRect();
-        targetYaw = ((event.clientX - bounds.left) / bounds.width - 0.5) * 1.2;
-        targetPitch = ((event.clientY - bounds.top) / bounds.height - 0.5) * -0.95;
+        targetYaw = ((event.clientX - bounds.left) / bounds.width - 0.5) * 0.35;
+        targetPitch = ((event.clientY - bounds.top) / bounds.height - 0.5) * -0.25;
         if (motion.matches) {
           pitch = targetPitch;
           yaw = targetYaw;
@@ -73,6 +82,28 @@ export default function ApertureModel() {
         }
       };
       const render = () => renderer.render(scene, camera);
+      const updateDissolve = () => {
+        if (!mixer || !dissolveUniform) return;
+
+        // The model fires at the bot near the end of its six-second loop.
+        // Break its image into glowing fragments, then restore it for the next pass.
+        const cycle = mixer.time % 6;
+        const dissolveStart = 4.15;
+        const dissolveEnd = 4.85;
+        const restoreStart = 5.65;
+        const restoreEnd = 6;
+        if (cycle < dissolveStart) {
+          dissolveUniform.value = 0;
+        } else if (cycle < dissolveEnd) {
+          const progress = (cycle - dissolveStart) / (dissolveEnd - dissolveStart);
+          dissolveUniform.value = progress * progress * (3 - 2 * progress);
+        } else if (cycle < restoreStart) {
+          dissolveUniform.value = 1;
+        } else {
+          const progress = (cycle - restoreStart) / (restoreEnd - restoreStart);
+          dissolveUniform.value = 1 - progress * progress * (3 - 2 * progress);
+        }
+      };
       const animate = (time: number) => {
         if (previousTime !== undefined) {
           mixer?.update(Math.min((time - previousTime) / 1000, 0.1));
@@ -81,6 +112,7 @@ export default function ApertureModel() {
         pitch += (targetPitch - pitch) * 0.2;
         yaw += (targetYaw - yaw) * 0.2;
         applyTilt();
+        updateDissolve();
         render();
       };
       const updatePlayback = () => {
@@ -117,8 +149,8 @@ export default function ApertureModel() {
         delete container.dataset.loaded;
       };
 
-      const response = await fetch("/models/botstopper-rotating-aperture.glb", { signal: abort.signal });
-      if (!response.ok) throw new Error("Unable to load aperture model");
+      const response = await fetch("/models/botstopper-laser-bot.glb", { signal: abort.signal });
+      if (!response.ok) throw new Error("Unable to load BotStopper laser bot model");
       const gltf = await new GLTFLoader().parseAsync(await response.arrayBuffer(), "/models/");
       model = gltf.scene;
       if (disposed) {
@@ -129,22 +161,54 @@ export default function ApertureModel() {
       const bounds = new THREE.Box3().setFromObject(model);
       const sphere = bounds.getBoundingSphere(new THREE.Sphere());
       model.position.sub(sphere.center);
-      // The supplied model lies in the XZ plane. Face its front toward the camera.
+      const botTarget = model.getObjectByName("Bot_Target_PNG");
+      if (botTarget instanceof THREE.Mesh) {
+        const hadMaterialArray = Array.isArray(botTarget.material);
+        const materials: import("three").Material[] = hadMaterialArray
+          ? botTarget.material
+          : [botTarget.material];
+        const dissolve = { value: 0 };
+        dissolveUniform = dissolve;
+        const dissolvedMaterials = materials.map((material: import("three").Material) => {
+          const dissolvedMaterial = material.clone();
+          dissolvedMaterial.onBeforeCompile = (shader: import("three").WebGLProgramParametersWithUniforms) => {
+            shader.uniforms.uDissolve = dissolve;
+            shader.vertexShader = shader.vertexShader
+              .replace("#include <common>", "#include <common>\nvarying vec2 vDissolveUv;")
+              .replace("#include <uv_vertex>", "#include <uv_vertex>\nvDissolveUv = uv;");
+            shader.fragmentShader = shader.fragmentShader
+              .replace("#include <common>", "#include <common>\nuniform float uDissolve;\nvarying vec2 vDissolveUv;")
+              .replace("#include <map_fragment>", `#include <map_fragment>
+                float dissolveNoise = fract(sin(dot(vDissolveUv, vec2(12.9898, 78.233))) * 43758.5453);
+                if (dissolveNoise < uDissolve) discard;
+                float dissolveEdge = 1.0 - smoothstep(uDissolve, uDissolve + 0.08, dissolveNoise);
+                diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.24, 0.035), dissolveEdge * step(0.001, uDissolve));`);
+          };
+          dissolvedMaterial.customProgramCacheKey = () => "botstopper-target-dissolve-v1";
+          return dissolvedMaterial;
+        });
+        botTarget.material = hadMaterialArray ? dissolvedMaterials : dissolvedMaterials[0];
+      }
+
       pivot = new THREE.Group();
-      pivot.rotation.x = Math.PI / 2;
+      pivot.rotation.x = Math.PI / 2 + basePitch;
+      pivot.rotation.z = baseYaw;
+      pivot.position.y = sphere.radius * 0.3;
       pivot.add(model);
       scene.add(pivot);
       container.addEventListener("pointermove", handlePointerMove);
       container.addEventListener("pointerleave", resetPointer);
       mixer = new THREE.AnimationMixer(model);
-      for (const clip of gltf.animations) mixer.clipAction(clip).play();
+      const attack = gltf.animations.find((clip) => clip.name === "Target_Lock_Attack_6s");
+      if (attack) mixer.clipAction(attack).play();
       mixer.update(0);
+      updateDissolve();
 
       const resize = () => {
         const { width, height } = container.getBoundingClientRect();
         if (!width || !height) return;
         const aspect = width / height;
-        const halfHeight = sphere.radius * 1.15 / Math.min(aspect, 1);
+        const halfHeight = sphere.radius * 0.78 / Math.min(aspect, 1);
         camera.left = -halfHeight * aspect;
         camera.right = halfHeight * aspect;
         camera.top = halfHeight;
@@ -188,8 +252,13 @@ export default function ApertureModel() {
   }, []);
 
   return (
-    <div className="aperture-model" ref={containerRef} aria-hidden="true">
-      <Image className="aperture-fallback" src="/botstopper-mark.svg" alt="" width={160} height={160} />
+    <div
+      className="laser-bot-model"
+      ref={containerRef}
+      role="img"
+      aria-label="BotStopper challenges an automated bot, which breaks apart under the laser attack."
+    >
+      <Image className="laser-bot-fallback" src="/botstopper-mark.svg" alt="" width={160} height={160} />
     </div>
   );
 }
