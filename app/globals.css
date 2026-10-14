@@ -222,6 +222,50 @@ h1, h2, h3, h4, h5 { font-family: var(--font-heading), Georgia, serif; }
 .markdown-content .contains-task-list { padding-left: 0; list-style: none; }
 .markdown-content .task-list-item input { margin-right: 8px; accent-color: var(--accent); }
 .markdown-content hr { height: 1px; margin: 35px 0; border: 0; background: #e5dfe8; }
+
+.anubis-request-flow { margin: 34px 0 42px; padding: 23px 22px 19px; border: 1px solid #e2dbe8; background: linear-gradient(135deg, #faf8fb, #f1edf4); color: #403749; }
+.anubis-request-flow figcaption { max-width: 760px; margin: 0 auto 6px; color: #594b66; font: 600 22px/1.4 var(--font-heading), Georgia, serif; text-align: center; }
+.anubis-flow-visual { position: relative; min-height: 218px; }
+.anubis-flow-scene { position: absolute; z-index: 0; inset: 0; overflow: hidden; }
+.anubis-flow-scene canvas { display: block; width: 100%; height: 100%; }
+.anubis-flow-stages { position: relative; z-index: 1; display: grid; min-height: 218px; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.markdown-content .anubis-flow-stages { margin: 0; padding: 0; }
+.anubis-flow-stage { display: flex; min-height: 89px; flex-direction: column; align-items: center; justify-content: center; padding: 12px 8px; border: 1px solid rgba(213, 203, 222, .9); background: rgba(255, 255, 255, .82); text-align: center; }
+.markdown-content li.anubis-flow-stage { margin: 0; padding: 12px 8px; }
+.anubis-flow-stage:not(:last-child)::after { position: absolute; right: -11px; color: #917ba3; content: "→"; font-size: 17px; }
+.anubis-flow-stage { position: relative; }
+.anubis-flow-stage strong { color: #44384f; font-size: 16px; line-height: 1.35; }
+.anubis-flow-stage small { display: block; color: #62576c; font-size: 13px; font-weight: 500; line-height: 1.45; }
+.anubis-flow-kicker { margin-bottom: 7px; color: #6f5b7d; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.anubis-flow-gate { border-color: #bba9ca; background: rgba(239, 232, 244, .58); }
+.anubis-flow-gate strong { font: 600 25px/1.2 var(--font-heading), Georgia, serif; }
+.anubis-flow-outcomes { display: flex; justify-content: space-between; gap: 12px; margin: 0 10px; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+.anubis-flow-blocked { color: #a63f39; }
+.anubis-flow-blocked b { display: inline-grid; width: 18px; height: 18px; place-items: center; border-radius: 50%; background: #c7463e; color: #fff; font-size: 14px; line-height: 1; }
+.anubis-flow-allowed { color: #675675; }
+.anubis-flow-description { margin: 13px 0 0 !important; color: #62576c; font-size: 14px; line-height: 1.55; text-align: center; }
+.anubis-flow-scene:not([data-loaded="true"]) { visibility: hidden; }
+
+.soteria-lane-visualizer { margin: 28px 0 34px; padding: 20px; border: 1px solid #d8cde1; background: #f5f1f7; color: #403749; }
+.soteria-lane-visualizer figcaption { display: grid; gap: 5px; color: #62576c; font-size: 13px; line-height: 1.5; }
+.soteria-lane-visualizer figcaption strong { color: #44384f; font: 600 21px/1.25 var(--font-heading), Georgia, serif; }
+.soteria-lane-threshold { margin: 12px 0 15px !important; color: #62576c; font-size: 13px; }
+.soteria-lane-threshold code { padding: 2px 5px; border: 1px solid #ded5e5; background: #fff; color: #44384f; font-size: .95em; }
+.markdown-content .soteria-lanes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.markdown-content li.soteria-lane { min-width: 0; margin: 0; padding: 12px; border: 1px solid #ded5e5; background: #fff; list-style: none; transition: border-color .35s ease, background-color .35s ease; }
+.soteria-lane.is-solved { border-color: #94a779; background: #f1f5eb; }
+.soteria-lane-heading { display: flex; align-items: center; justify-content: space-between; gap: 6px; color: #44384f; font-size: 13px; }
+.soteria-lane-solved { padding: 2px 6px; border-radius: 2px; background: #e2ecd7; color: #40552c; font-size: 10px; font-weight: 700; }
+.soteria-lane-values { display: grid; gap: 7px; margin: 12px 0; }
+.soteria-lane-values div { display: flex; justify-content: space-between; gap: 6px; min-width: 0; }
+.soteria-lane-values dt { color: #71667b; font-size: 10px; }
+.soteria-lane-values dd { margin: 0; color: #44384f; font-size: 11px; }
+.soteria-lane-values code { font-size: 1em; }
+.soteria-lane-progress-label { display: flex; justify-content: space-between; gap: 8px; color: #62576c; font-size: 10px; }
+.soteria-lane-progress { height: 7px; overflow: hidden; margin-top: 5px; border-radius: 4px; background: #e8e1ed; }
+.soteria-lane-progress span { display: block; height: 100%; border-radius: inherit; background: #806493; transition: width .45s ease; }
+.soteria-lane.is-solved .soteria-lane-progress span { background: #718f50; }
+
 .docs-article-footer { display: flex; justify-content: space-between; gap: 18px; margin-top: 58px; padding-top: 20px; border-top: 1px solid #e5dfe8; }
 .docs-article-footer a { display: grid; gap: 7px; color: #59456a; text-decoration: none; }
 .docs-article-footer small { color: #94889d; font-size: 8px; font-weight: 700; letter-spacing: .14em; }
@@ -298,6 +342,18 @@ h1, h2, h3, h4, h5 { font-family: var(--font-heading), Georgia, serif; }
   .markdown-content { font-size: 13px; }
   .markdown-content > h1 { font-size: 43px; }
   .markdown-content > h2 { margin-top: 35px; font-size: 27px; }
+  .anubis-request-flow { margin: 28px 0 35px; padding: 18px 15px; }
+  .anubis-flow-visual, .anubis-flow-stages { min-height: 0; }
+  .anubis-flow-scene { display: none; }
+  .anubis-flow-stages { grid-template-columns: 1fr; gap: 7px; }
+  .anubis-flow-stage { min-height: 60px; }
+  .anubis-flow-stage:not(:last-child)::after { top: auto; right: calc(50% - 6px); bottom: -15px; z-index: 2; content: "↓"; }
+  .anubis-flow-outcomes { flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .markdown-content .soteria-lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .soteria-lane-visualizer { padding: 14px; }
+  .markdown-content .soteria-lanes { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
