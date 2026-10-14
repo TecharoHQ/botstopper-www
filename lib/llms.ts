@@ -13,7 +13,7 @@ function describe(content: string): string {
     }
     if (inFence) continue;
     const trimmed = line.trim();
-    if (!trimmed || /^[#->]/.test(trimmed)) continue;
+    if (!trimmed || /^import\s/.test(trimmed) || /^[#->]/.test(trimmed)) continue;
     const text = trimmed.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1");
     return text.length > 100 ? `${text.slice(0, 97)}...` : text;
   }
