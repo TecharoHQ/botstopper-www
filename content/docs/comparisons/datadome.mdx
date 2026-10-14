@@ -1,0 +1,75 @@
+# BotStopper vs DataDome
+
+Choose BotStopper if you want to operate browser challenges and scraper policies in your own infrastructure. Evaluate DataDome Bot Protect if you need a managed detection platform across websites, APIs, and mobile applications.
+
+Techaro builds BotStopper. This comparison describes documented architecture and product scope, not benchmark results.
+
+BotStopper is a commercial layer on Anubis. The [Anubis policy documentation](https://github.com/TecharoHQ/anubis/blob/main/docs/docs/admin/policies.mdx) is authoritative for its shared request rules and challenges. BotStopper adds product features such as headless detection and Soteria.
+
+## Features side by side
+
+| Requirement | BotStopper | DataDome Bot Protect |
+| --- | --- | --- |
+| Deployment | Local service in front of your application | Server or edge connector plus client integration |
+| Request decisions | Local rules select access and browser challenges | Managed detection with configurable responses |
+| Browser signals | Optional WebAssembly headless detector on the challenge page | JavaScript tag for websites |
+| Mobile applications | Browser challenges need compatible clients | Android and iOS SDKs; mobile coverage starts at Advanced |
+| Crawler access | Operator defines explicit access policies | Verified Bots and custom rules |
+| Operations | Operator maintains service, policies, and proxy configuration | Vendor operates detection. Customer maintains integrations. |
+| Commercial model | US$50/month subscription plus operating costs | Published tiers with traffic limits and contract details |
+
+DataDome documents the connectors, JavaScript tag, and mobile SDKs in its [integration guide](https://docs.datadome.co/docs/getting-started). Its [response documentation](https://docs.datadome.co/docs/rule-responses) covers allow, block, CAPTCHA, device checks, and restricted rate or time controls. BotStopper's capabilities and requirements appear in the [headless detection](/docs/extensions/headless.md) and [soteria](/docs/challenges/soteria.md) guides.
+
+## Deployment and operations
+
+BotStopper runs as a service that forwards permitted requests to your application. Its [installation guide](/docs/installation.md) covers packages, containers, and Kubernetes. Container access requires registry authentication. Your team maintains capacity, upgrades, availability, and the surrounding proxy configuration.
+
+The headless extension requires HTTPS, WebAssembly, and correct header forwarding. Its detector downloads must reach BotStopper for each challenge. Incorrect proxy caching can make legitimate challenges fail. Soteria requires WebAssembly SIMD and remains experimental. These constraints affect the clients you can challenge.
+
+DataDome recommends edge integration where available. Its supported connectors also include web servers and application frameworks. An existing CDN needs a compatibility review and configuration for the selected connector. Website integration includes a JavaScript tag, while mobile applications use SDKs. These are implementation tasks even with vendor-operated detection. See the [integration guide](https://docs.datadome.co/docs/getting-started).
+
+## Abuse scope and crawler access
+
+BotStopper fits a requirement to control access to public content and increase the cost of repeated browser scraping. A scraper that can complete the challenge can still obtain access. Application authorization, attack-payload inspection, and upstream network capacity remain separate requirements.
+
+DataDome sells Bot Protect alongside Account Protect, Ad Protect, and DDoS Protect. These are distinct products. A Bot Protect tier does not establish that every account-fraud or DDoS service is included. Its [pricing page](https://datadome.co/pricing/) distinguishes their scope.
+
+For either product, crawler identity and purpose need separate decisions. Search indexing, archives, AI training, and user-requested fetches can require different access. Browser challenges can prevent useful crawlers from reading content. An allow rule based only on a user agent can admit impersonators.
+
+DataDome supports policies for verified bots and AI agents. Custom rules can override detection policies for selected traffic. Identity does not require unconditional permission. See [custom rules](https://docs.datadome.co/docs/configure-custom-rules) and [bot responses](https://docs.datadome.co/docs/rule-responses). With BotStopper, your team owns the corresponding allow and deny policy.
+
+## Full operating cost
+
+BotStopper's [published price](/pricing) is US$50 per month through GitHub Sponsors. Include servers, storage, logs, proxy services, upgrades, and operator time. BotStopper is commercial. Anubis's open source license does not make BotStopper free.
+
+DataDome lists Bot Protect Essentials at US$3,830/month, Advanced at US$8,670, Premium at US$10,160, and Enterprise from US$13,270. Essentials covers websites and web APIs. Mobile apps, mobile APIs, and machine-to-machine APIs require Advanced or higher.
+
+Published monthly request bands are fewer than 100 million for Essentials, 200 million for Advanced, and 300 million for Premium. Enterprise lists more than 300 million. RPS tiers also apply. Support and account features differ. Obtain a quote for your traffic and required products. See [DataDome pricing](https://datadome.co/pricing/).
+
+Compare the same domains, clients, peak traffic, retention, and response commitments. Add integration work and ongoing policy administration to both estimates.
+
+## When each fits
+
+BotStopper fits teams that can operate a local service and prioritize scraper access policies with readable configuration. DataDome fits teams that want managed detection, mobile SDKs, and vendor services across a broader application estate. This fit assessment follows their documented architecture. It makes no claim about comparative detection accuracy.
+
+## FAQ
+
+### Does BotStopper replace DataDome's entire platform?
+
+Only a requirement assessment can establish that. Browser scraper controls do not establish equivalent account, advertising, or mobile protection.
+
+### Can either product preserve search access?
+
+Both provide access policies. Correct crawler identification and checks with your actual crawlers determine the result.
+
+### Is BotStopper free because Anubis is open source?
+
+No. BotStopper has its own commercial subscription and operating costs.
+
+## Related documentation
+
+- [Compare bot protection options](/docs/comparisons.md)
+- [Installation](/docs/installation.md)
+- [Configuration](/docs/configuration.md)
+- [Headless browser detection](/docs/extensions/headless.md)
+- [Soteria challenge](/docs/challenges/soteria.md)

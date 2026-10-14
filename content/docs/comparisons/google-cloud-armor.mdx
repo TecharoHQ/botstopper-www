@@ -1,0 +1,78 @@
+# BotStopper vs Google Cloud Armor
+
+BotStopper fits sites that need control over scraper access in infrastructure they choose. Google Cloud Armor fits a supported Google Cloud delivery path with security policies and reCAPTCHA integration. Compare the complete deployment, including bot assessment and operation costs.
+
+Techaro builds BotStopper, a layer on top of Anubis. This comparison uses documented capabilities, not performance benchmarks. Anubis documentation describes the shared engine. Active policies and product versions affect the result.
+
+## Side-by-side comparison
+
+| Decision | BotStopper | Google Cloud Armor |
+| --- | --- | --- |
+| Main role | Scraper access policies and browser challenges before content reaches the client. | Security policies for supported Google Cloud resources, including WAF rules and rate limits. |
+| Deployment | A proxy component in infrastructure you choose. | Policies attached to supported resources in a Google Cloud delivery architecture. |
+| Bot assessment | Anubis request policies and proof of work, with BotStopper extensions. | reCAPTCHA tokens and risk attributes evaluated in security policies. |
+| Browser requirements | Depend on the selected challenge. The headless extension requires WebAssembly. | Manual challenges and session tokens serve websites. Action tokens also support mobile applications. |
+| Application attacks | Use a separate payload WAF where the application requires one. | Preconfigured WAF rules can inspect application requests. |
+| Costs | Product subscription plus infrastructure and operation costs. | Policy, rule, and request charges or an Enterprise plan, plus reCAPTCHA and surrounding services. |
+
+Sources: [BotStopper installation](/docs/installation.md), [headless detection](/docs/extensions/headless.md), [Anubis policies](https://github.com/TecharoHQ/anubis/blob/main/docs/docs/admin/policies.mdx), [Cloud Armor security policies](https://docs.cloud.google.com/armor/docs/security-policy-overview), and [bot management](https://docs.cloud.google.com/armor/docs/bot-management).
+
+## Deployment and policy scope
+
+BotStopper runs before an upstream site. You choose the hosting, proxy path, and request policies. The shared Anubis engine can allow, deny, weigh, or challenge requests. BotStopper adds [headless browser detection](/docs/extensions/headless.md) and the experimental [Soteria challenge](/docs/challenges/soteria.md).
+
+Cloud Armor distinguishes backend, edge, and network edge policies. Features differ by policy type and the protected resource. Confirm that your architecture supports the required rules before you select a plan. A Google Cloud account alone does not establish that every endpoint supports the same protection. [Cloud Armor policy overview](https://docs.cloud.google.com/armor/docs/security-policy-overview).
+
+A local scraper control layer also needs sufficient network capacity and upstream flood protection. Plan that capacity separately from browser challenge policies.
+
+## reCAPTCHA integration and visitor access
+
+Cloud Armor evaluates reCAPTCHA token attributes and can allow, deny, rate-limit, or redirect requests. Frictionless assessment requires action tokens, session tokens, or both. Your application and security policy must support that integration. [Cloud Armor bot management](https://docs.cloud.google.com/armor/docs/bot-management).
+
+BotStopper's browser challenges also affect visitors. The headless extension needs HTTPS, WebAssembly, and correct proxy handling of detector requests. A browser with WebAssembly disabled cannot pass a policy that requires this extension. [Headless browser requirements](/docs/extensions/headless.md).
+
+Evaluate each system with ordinary browsers, mobile clients, privacy tools, and approved automation. Record challenge completion failures and requests denied by mistake. Neither vendor documentation nor a feature table establishes comparative detection accuracy.
+
+## Search crawlers and SEO
+
+A crawler that identifies itself as Googlebot is not necessarily Googlebot. Google publishes network ranges and a DNS verification procedure. Identity verification and permission to access content are separate policy decisions. [Google crawler verification](https://developers.google.com/crawling/docs/crawlers-fetchers/verify-google-requests).
+
+For either product, define access for search crawlers, AI training crawlers, preview tools, APIs, and uptime monitors. Inspect the delivered article, canonical tags, robots.txt, sitemap, and required assets. A successful HTTP status alone does not prove that the crawler received the article.
+
+Use Search Console URL Inspection to examine the rendered page. Browser JavaScript support does not guarantee successful challenge completion. [Google JavaScript guidance](https://developers.google.com/search/docs/crawling-indexing/javascript/fix-search-javascript).
+
+## Costs to include
+
+BotStopper's published price is US$50 per month through GitHub Sponsors. Add hosting, bandwidth, storage, updates, monitoring, and operator time for your deployment. [BotStopper pricing](/pricing).
+
+Cloud Armor Standard charges for policies, rules, and requests. Enterprise plans use different subscription and processing charges. Bot management follows reCAPTCHA pricing. Include load balancing, logs, data transfer, and any Enterprise processing fees in the estimate. [Cloud Armor pricing](https://cloud.google.com/armor/pricing).
+
+Use the same traffic volume and protection scope for both estimates. A base WAF bill excludes costs that a complete bot management deployment can require.
+
+## Which fits your site?
+
+- Choose BotStopper when your priority is scraper access control through a proxy you operate, with readable policies and browser challenges.
+- Choose Cloud Armor when your application already uses supported Google Cloud resources and needs integrated security policies and reCAPTCHA assessment.
+- Evaluate both layers when their roles complement each other. Verify client IP handling, direct-origin access, cookies, caching, and challenge order.
+
+## Frequently asked questions
+
+### Does Cloud Armor include bot protection without reCAPTCHA integration?
+
+Cloud Armor has security policy controls, but the bot assessment described here uses reCAPTCHA. Compare that combined system and its charges.
+
+### Can BotStopper replace every Cloud Armor feature?
+
+BotStopper addresses scraper access and browser challenges. Assess application attack inspection, network protection, and delivery requirements separately.
+
+### Does either option guarantee search indexing?
+
+No. Policy configuration and the content delivered to real crawlers determine access. Verify the result through the protected endpoint.
+
+## Related documentation
+
+- [All comparisons](/docs/comparisons.md)
+- [BotStopper configuration](/docs/configuration.md)
+- [BotStopper installation](/docs/installation.md)
+- [BotStopper vs AWS WAF](/docs/comparisons/aws-waf.md)
+- [BotStopper vs Cloudflare WAF](/docs/comparisons/cloudflare-waf.md)
