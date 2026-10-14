@@ -1,0 +1,26 @@
+# meta-refresh
+
+The `metarefresh` challenge asks the browser to refresh the page after a delay.
+
+The challenge uses either an HTML meta refresh or an HTTP `Refresh` header.
+Both direct the browser to the challenge endpoint after `difficulty + 1` seconds.
+The server requires at least 800 milliseconds per unit of `difficulty` before it accepts the response.
+
+## Configuration
+
+Add a browser rule to the `bots` list:
+
+```yaml
+bots:
+  - name: generic-browser
+    expression: userAgent.matches("Mozilla|Opera")
+    action: CHALLENGE
+    challenge:
+      algorithm: metarefresh
+      difficulty: 1
+```
+
+With `difficulty: 1`, the browser refreshes after two seconds.
+The expression matches a User-Agent that contains `Mozilla` or `Opera`.
+See [policies](/docs/policies.md) for rule order and actions.
+See [expressions](/docs/configuration/expressions.md) for other match conditions.

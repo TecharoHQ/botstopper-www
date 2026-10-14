@@ -1,0 +1,26 @@
+# fast
+
+The `fast` algorithm uses an optimized JavaScript implementation with multiple threads.
+The browser solves a [proof of work](https://en.wikipedia.org/wiki/Proof_of_work) puzzle before it receives a token for the protected service.
+
+Difficulty counts the leading hexadecimal digits that the solution must match.
+Each hexadecimal digit represents four bits.
+
+## Configuration
+
+Use `fast` in a threshold rule:
+
+```yaml
+thresholds:
+  - name: moderate-suspicion
+    expression:
+      all:
+        - weight >= 10
+        - weight < 20
+    action: CHALLENGE
+    challenge:
+      algorithm: fast
+      difficulty: 2
+```
+
+See [thresholds](/docs/configuration/thresholds.md) for rules based on request weight.

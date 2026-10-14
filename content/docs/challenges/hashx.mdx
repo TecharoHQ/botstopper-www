@@ -1,0 +1,19 @@
+# hashx
+
+The `hashx` algorithm uses [HashX](https://github.com/tevador/hashx), a proof of work function that resists GPU and ASIC optimization.
+It uses the Rust [`hashx`](https://docs.rs/hashx/latest/hashx/index.html) crate.
+
+```yaml
+thresholds:
+  - name: moderate-suspicion
+    expression:
+      all:
+        - weight >= 10
+        - weight < 20
+    action: CHALLENGE
+    challenge:
+      algorithm: hashx
+      difficulty: 16
+```
+
+See [thresholds](/docs/configuration/thresholds.md) for rules based on request weight.

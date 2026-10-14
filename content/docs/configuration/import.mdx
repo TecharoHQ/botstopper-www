@@ -1,0 +1,194 @@
+# Importing configuration rules
+
+BotStopper has the ability to let you import snippets of configuration into the main configuration file. This allows you to break up your config into smaller parts that get logically assembled into one big file.
+
+EG:
+
+```yaml
+bots:
+  # Pathological bots to deny
+  - # This correlates to data/bots/ai-catchall.yaml in the source tree
+    import: (data)/bots/ai-catchall.yaml
+  - import: (data)/bots/cloudflare-workers.yaml
+  # Import all the rules in the default configuration
+  - import: (data)/meta/default-config.yaml
+```
+
+> **Note.**
+> The `(data)` pseudo-folder corresponds to a copy of the [`data`](https://github.com/TecharoHQ/anubis/tree/main/data) as of the time BotStopper was compiled. If you want to dump a copy of the `(data)` folder out of your BotStopper binary, run this command:
+>
+> ```sh
+> anubis --extract-resources ./var/anubis-resources
+> ```
+>
+> This will extract the contents of the `(data)` folder compiled into your copy of BotStopper as well as the contents of static filesystem used for web assets. For example:
+>
+> ```
+> $ tree -L 2 ./var/anubis-resources/
+> ./var/anubis-resources/
+> ├── data
+> │   ├── apps
+> │   ├── botPolicies.yaml
+> │   ├── bots
+> │   ├── clients
+> │   ├── common
+> │   ├── crawlers
+> │   ├── meta
+> │   └── services
+> └── static
+>     ├── img
+>     ├── js
+>     ├── locales
+>     ├── robots.txt
+>     └── testdata
+> ```
+>
+> The contents of the `static` folder are not subject to any backwards compatibility promises and may change at any time without warning.
+>
+> Replace assets in the `static` folder using reverse proxy configuration at your peril, as doing so may break challenge verification logic.
+
+Of note, a bot rule can either have inline bot configuration or import a bot config snippet. You cannot do both in a single bot rule.
+
+```yaml
+bots:
+  - import: (data)/bots/ai-catchall.yaml
+    name: generic-browser
+    user_agent_regex: >
+      Mozilla|Opera
+    action: CHALLENGE
+```
+
+This will return an error like this:
+
+```text
+config is not valid:
+config.BotOrImport: rule definition is invalid, you must set either bot rules or an import statement, not both
+```
+
+Paths can either be prefixed with `(data)` to import from the [the data folder in the BotStopper source tree](https://github.com/TecharoHQ/anubis/tree/main/data) or anywhere on the filesystem. If you don't have access to the BotStopper source tree, check /usr/share/docs/anubis/data or in the tarball you extracted BotStopper from.
+
+## Importing many files at once
+
+If you want to import policies from many files at once, the import path can contain [wildcards](<https://en.wikipedia.org/wiki/Glob_(programming)>). Wildcard matches let you add rules by dropping a file into a folder instead of editing your main configuration file every time.
+
+For example:
+
+```yaml
+bots:
+  # Every rule file in the (data)/crawlers folder.
+  - import: (data)/crawlers/*.yaml
+  # Every rule file you put in /etc/techaro-botstopper/known-good.
+  - import: /etc/techaro-botstopper/known-good/*.yaml
+```
+
+### Supported wildcards
+
+BotStopper uses the Go standard library function [`filepath.Match`](https://pkg.go.dev/path/filepath#Match) for matching. It supports four wildcards:
+
+| Wildcard | Matches                             | Example                                                                                |
+| :------- | :---------------------------------- | :------------------------------------------------------------------------------------- |
+| `*`      | Any run of characters in one folder | `crawlers/*.yaml` matches `crawlers/kagibot.yaml`, but not `crawlers/eu/kagibot.yaml`. |
+| `?`      | Exactly one character               | `??-allow.yaml` matches `00-allow.yaml` and `xe-allow.yaml`, but not `1-allow.yaml`.   |
+| `[0-9]`  | One character from a set or range   | `[0-9][0-9]-*.yaml` matches `00-monitoring.yaml`, but not `xe-monitoring.yaml`.        |
+| `[^0-9]` | One character not in a set or range | `[^0-9]*.yaml` matches `xe.yaml`, but not `00-xe.yaml`.                                |
+
+Use [this Go playground link](https://go.dev/play/p/Q2qayrjZw4A) to test pattern matches.
+
+### Matched files load in natural sort order
+
+BotStopper matches requests top to bottom, similar to Apache's `DENY, ALLOW` ACL. BotStopper uses the first rule that matches the request exactly. A rule that loads early can shadow a rule that loads later.
+
+When BotStopper loads files imported with a wildcard match, it sorts the files in [natural sort order](https://en.wikipedia.org/wiki/Natural_sort_order). To control the order rules are loaded, put a number at the beginning of each filename:
+
+```text
+/etc/techaro-botstopper/known-good/
+├── 00-allow-monitoring.yaml
+├── 01-allow-git-clients.yaml
+├── 02-allow-techaro-ci-bot.yaml
+└── 10-weigh-everything-else.yaml
+```
+
+Natural sort compares numbers numerically and words alphabetically. This makes `02-deny.yaml` load before `10-deny.yaml`.
+
+> **Tip.**
+> Make sure your indentation is consistent across all files matched in a single import statement. Format your YAML files with [yq](https://github.com/mikefarah/yq) or configure your editor to format YAML files when you save.
+
+### Errors from wildcard imports
+
+A wildcard import that fails stops BotStopper at startup. These are the common causes:
+
+| Error                                              | Cause                                                                                     |
+| :------------------------------------------------- | :---------------------------------------------------------------------------------------- |
+| `glob pattern matched no files`                    | The pattern matched nothing. Check the folder, the file extension, and the syntax.        |
+| `can't parse (data)/*: read apps/: is a directory` | The pattern matched a folder. End the pattern with `.yaml` so that it only matches files. |
+| `can't parse ...: yaml: line N: ...`               | One of the matched files is not a top level list, or its indentation is wrong.            |
+
+Patterns that match no files result in errors. The message names the pattern that failed:
+
+```text
+glob pattern matched no files: "(data)/bots/*.yml", note that recursive wildcards ("**") and alternation ("{yaml,yml}") are not supported
+```
+
+## Importing the default configuration
+
+If you want to base your configuration off of the default configuration, import `(data)/meta/default-config.yaml`:
+
+```yaml
+bots:
+  - import: (data)/meta/default-config.yaml
+  # Write your rules here
+```
+
+This will keep your configuration up to date as BotStopper adapts to emerging threats.
+
+## How do I exempt most modern browsers from BotStopper challenges?
+
+If you want to exempt most modern browsers from BotStopper challenges, import `(data)/common/acts-like-browser.yaml`:
+
+```yaml
+bots:
+  - import: (data)/meta/default-config.yaml
+  - import: (data)/common/acts-like-browser.yaml
+  # Write your rules here
+```
+
+These rules will allow traffic that "looks like" it's from a modern copy of Edge, Safari, Chrome, or Firefox. These rules used to be enabled by default, however user reports have suggested that AI scraper bots have adapted to conform to these rules to scrape without regard for the infrastructure they are attacking.
+
+Use these rules at your own risk.
+
+## Importing from imports
+
+You can also import from an imported file in case you want to import an entire folder of rules at once.
+
+```yaml
+bots:
+  - import: (data)/bots/_deny-pathological.yaml
+```
+
+This lets you import an entire ruleset at once:
+
+```yaml
+# (data)/bots/_deny-pathological.yaml
+- import: (data)/bots/cloudflare-workers.yaml
+- import: (data)/bots/headless-browsers.yaml
+- import: (data)/bots/us-ai-scraper.yaml
+```
+
+Use this with care, you can easily get yourself into a state where BotStopper recursively imports things for eternity if you are not careful.
+
+If you need to import many files, please consider using [glob matching](#importing-many-files-at-once) instead.
+
+## Writing snippets
+
+Snippets can be written in either JSON or YAML, with a preference for YAML. When writing a snippet, write the bot rules you want directly at the top level of the file in a list.
+
+Here is an example snippet that allows [IPv6 Unique Local Addresses](https://en.wikipedia.org/wiki/Unique_local_address) through BotStopper:
+
+```yaml
+- name: ipv6-ula
+  action: ALLOW
+  remote_addresses:
+    - fc00::/7
+```
+
+See [configuration](/docs/configuration.md) for deployment configuration.

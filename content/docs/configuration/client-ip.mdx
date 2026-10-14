@@ -1,0 +1,38 @@
+# Client IP Headers
+
+BotStopper appends the connecting peer address to `X-Forwarded-For`, then scans the chain from right to left.
+It forwards the first valid address outside these categories:
+
+- Private (`XFF_STRIP_PRIVATE`, enabled by default)
+- Loopback (always stripped)
+- CGNAT (always stripped)
+- Link-local Unicast (always stripped)
+
+```
+Incoming: X-Forwarded-For: 1.2.3.4, 5.6.7.8, 10.0.0.1
+Upstream: X-Forwarded-For: 5.6.7.8
+```
+
+This behavior will cause problems if the proxy in front of BotStopper is from a public IP, such as Cloudflare, because BotStopper will use the Cloudflare IP instead of your client's real IP. You will likely see all requests from your browser being blocked and/or an infinite challenge loop.
+
+```
+Incoming: X-Forwarded-For: REAL_CLIENT_IP, CF_IP
+Upstream: X-Forwarded-For: CF_IP
+```
+
+Configure your ingress to derive the client address from a trusted source, such as Cloudflare’s `CF-Connecting-IP` header.
+Overwrite client-supplied IP headers before the request reaches BotStopper.
+For a public connecting peer, also set `X-Real-IP` or configure `--custom-real-ip-header`.
+A single incoming `X-Forwarded-For` address does not prevent BotStopper from appending and selecting the public peer address.
+
+If you do not control the web server upstream of BotStopper, the `custom-real-ip-header` command line flag accepts a header value that BotStopper will read the real client IP address from. BotStopper will set the `X-Real-IP` header to the IP address found in the custom header.
+
+If `X-Real-IP` is absent, BotStopper infers it from `X-Forwarded-For`.
+An explicit `X-Real-IP` value takes precedence. The ingress must replace spoofed values.
+
+These address exclusions are not a list of authenticated proxy identities.
+Restrict direct access to BotStopper when your configuration relies on ingress headers.
+
+See [Cloudflare](https://anubis.techaro.lol/docs/admin/environments/cloudflare) for an example configuration.
+
+See [configuration](/docs/configuration.md) for deployment configuration.

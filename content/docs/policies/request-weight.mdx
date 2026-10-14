@@ -1,0 +1,46 @@
+# Request weight
+
+## Risk calculation for downstream services
+
+In case your service needs it for risk calculation reasons, BotStopper exposes information about the rules that any requests match using a few headers:
+
+| Header            | Explanation                                          | Example          |
+| :---------------- | :--------------------------------------------------- | :--------------- |
+| `X-Anubis-Rule`   | The name of the rule that was matched                | `bot/lightpanda` |
+| `X-Anubis-Action` | The action that BotStopper took in response to that rule | `CHALLENGE`      |
+| `X-Anubis-Status` | The status and how strict BotStopper was in its checks   | `PASS`           |
+
+Policy rules are matched using [Go's standard library regular expressions package](https://pkg.go.dev/regexp). You can mess around with the syntax at [regex101.com](https://regex101.com), make sure to select the Golang option.
+
+## Request Weight
+
+BotStopper rules can also add or remove "weight" from requests, allowing administrators to configure custom levels of suspicion. For example, if your application uses session tokens named `i_love_gitea`:
+
+```yaml
+- name: gitea-session-token
+  action: WEIGH
+  expression:
+    all:
+      - '"Cookie" in headers'
+      - headers["Cookie"].contains("i_love_gitea=")
+  # Remove 5 weight points
+  weight:
+    adjust: -5
+```
+
+This removes five weight points. The matching [weight threshold](/docs/configuration/thresholds.md) determines the resulting challenge or action.
+
+### Weight Thresholds
+
+For more information on configuring weight thresholds, see [Weight Threshold Configuration](/docs/configuration/thresholds.md)
+
+### Advice
+
+The request weight starts at zero. Each matching `WEIGH` rule adds its `weight.adjust` value.
+Thresholds evaluate the total after bot rules finish. Tune adjustments and thresholds together:
+
+- The default browser rule adds 10 weight points. Thresholds determine the resulting challenge.
+- Remove and add weight in multiples of five.
+- Put stricter thresholds before broader thresholds that can match the same weight.
+
+See [policy configuration](/docs/policies.md) for related topics.

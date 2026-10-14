@@ -1,0 +1,32 @@
+# Extensions
+
+Challenge extensions add conditions to an existing challenge. BotStopper uses them to check browser behavior without changing the challenge algorithm.
+
+To enable an extension, add its name to the `extensions` field in your challenge definition:
+
+```yaml
+thresholds:
+  - name: mild-suspicion
+    expression:
+      all:
+        - weight > 0
+        - weight < 10
+    action: CHALLENGE
+    challenge:
+      algorithm: fast
+      difficulty: 2
+      report_as: 2
+      extensions:
+        - css-load
+```
+
+This example adds the [CSS loading extension](/docs/extensions/css-load.md) to the [fast challenge](/docs/challenges/fast.md).
+
+Extensions add inexpensive browser checks that can help detect scripts which only solve the challenge computation.
+
+## Available extensions
+
+- [CSS loading](/docs/extensions/css-load.md) checks that the client requests a CSS resource from BotStopper.
+- [Headless browser detection](/docs/extensions/headless.md) examines the browser for signs of automation and requires JavaScript and WebAssembly.
+
+For policy configuration, refer to [thresholds](/docs/configuration/thresholds.md) and [expressions](/docs/configuration/expressions.md).

@@ -1,0 +1,58 @@
+# Content Security Policy
+
+A [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP) controls which resources a browser can load.
+BotStopper challenge pages need scripts, styles, images, fonts, network requests, and web workers.
+
+Use this policy as a starting point for the standard JavaScript proof-of-work challenge:
+
+```text
+default-src 'none';
+script-src  'self' 'unsafe-inline';
+style-src   'self' 'unsafe-inline';
+img-src     'self';
+font-src    'self' data:;
+connect-src 'self';
+worker-src  'self' blob:;
+base-uri    'none';
+form-action 'self';
+```
+
+> **Warning.** Check the policy on a staging domain before deployment. Your application can need additional sources, such as an image CDN.
+
+| Directive | Purpose |
+| :-------- | :------ |
+| `default-src 'none'` | Blocks resources unless another directive permits them. |
+| `script-src 'self'` | Permits challenge scripts from the protected site. |
+| `script-src 'unsafe-inline'` | Permits the inline script that checks script loading and retries failed loads with exponential backoff. |
+| `style-src 'self'` | Permits stylesheets from the protected site. |
+| `style-src 'unsafe-inline'` | Permits embedded styles and style attributes used for challenge messages. |
+| `img-src 'self'` | Permits challenge images from the protected site. |
+| `font-src 'self' data:` | Permits local fonts and fonts embedded in stylesheets. |
+| `connect-src 'self'` | Permits worker downloads and translation requests. |
+| `worker-src blob:` | Permits workers created from downloaded source without a separate download per hardware thread. |
+| `worker-src 'self'` | Permits fallback worker downloads from the protected site. |
+| `base-uri 'none'` | Blocks HTML base URL overrides. |
+| `form-action 'self'` | Permits form submissions to the protected site, including challenge methods that use forms. |
+
+## WebAssembly and headless detection
+
+For [WebAssembly challenges](/docs/challenges/argon2id.md), the browser must permit WebAssembly compilation.
+Add `'wasm-unsafe-eval'` to `script-src` where the browser supports that CSP source.
+
+The [headless extension](/docs/extensions/headless.md) also requires WebAssembly.
+Its dynamic JavaScript probes need `'unsafe-eval'` in `script-src`.
+If CSP blocks those probes, their results become inconclusive.
+A detector-level exception still fails the challenge.
+
+Headless worker probes require `worker-src 'self' blob:`.
+If CSP blocks blob workers, the worker probes cannot run.
+The resulting `worker.unavailable` signal has a weight of zero.
+
+Choose the script permissions required by your configured challenge and extensions.
+For example, this directive permits the headless detector's dynamic probes and WebAssembly compilation:
+
+```text
+script-src 'self' 'unsafe-inline' 'unsafe-eval';
+```
+
+See [configuration](/docs/configuration.md) for deployment configuration.

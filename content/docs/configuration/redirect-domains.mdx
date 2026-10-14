@@ -1,0 +1,85 @@
+# Redirect domain
+
+BotStopper has an HTTP redirect in the middle of its check validation logic. This redirect allows BotStopper to set a cookie on validated requests so that users don't need to pass challenges on every page load.
+
+This flow looks something like this:
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Challenge
+  participant Validation
+  participant Backend
+
+  User->>+Challenge: GET /
+  Challenge->>+User: Solve this challenge
+  User->>+Validation: Here's the solution, send me to /
+  Validation->>+User: Here's a cookie, go to /
+  User->>+Backend: GET /
+```
+
+However, in some cases a sufficiently dedicated attacker could trick a user into clicking on a validation link with a solution pre-filled out. For example:
+
+```mermaid
+sequenceDiagram
+  participant Hacker
+  participant User
+  participant Validation
+  participant Evil Site
+
+  Hacker->>+User: Click on example.org with this solution
+  User->>+Validation: Here's a solution, send me to evilsite.com
+  Validation->>+User: Here's a cookie, go to evilsite.com
+  User->>+Evil Site: GET evilsite.com
+```
+
+If the requested destination is outside the configured allowlist, BotStopper returns this error:
+
+```text
+Redirect domain not allowed
+```
+
+## Configuring allowed redirect domains
+
+By default, BotStopper may redirect to any domain which could cause security issues in the unlikely case that an attacker passes a challenge for your browser and then tricks you into clicking a link to your domain.
+One can restrict the domains that BotStopper can redirect to when passing a challenge by setting up `REDIRECT_DOMAINS` environment variable.
+If you need to set more than one domain, fill the environment variable with a comma-separated list of domain names.
+There is also glob matching support. You can pass `*.bugs.techaro.lol` to allow redirecting to anything ending with `.bugs.techaro.lol`. There is a limit of 4 wildcards.
+
+> **Note.**
+> If you are hosting BotStopper on a non-standard port (`https://example.com:8443`, `http://www.example.net:8080`, etc.), you must also include the port number here.
+
+### Environment file
+
+```shell
+# anubis.env
+
+REDIRECT_DOMAINS="example.org,secretplans.example.org,*.test.example.org"
+# ...
+```
+
+### Docker Compose
+
+```yaml
+services:
+  anubis-nginx:
+    image: ghcr.io/techarohq/botstopper/anubis:latest
+    environment:
+      REDIRECT_DOMAINS: "example.org,secretplans.example.org,*.test.example.org"
+      # ...
+```
+
+### Kubernetes
+
+Inside your Deployment, StatefulSet, or Pod:
+
+```yaml
+- name: anubis
+  image: ghcr.io/techarohq/botstopper/anubis:latest
+  env:
+    - name: REDIRECT_DOMAINS
+      value: "example.org,secretplans.example.org,*.test.example.org"
+    # ...
+```
+
+See [configuration](/docs/configuration.md) for deployment configuration.

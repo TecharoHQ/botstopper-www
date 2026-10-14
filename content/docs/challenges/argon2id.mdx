@@ -1,0 +1,20 @@
+# argon2id
+
+The `argon2id` algorithm uses the memory-hard [Argon2](https://en.wikipedia.org/wiki/Argon2) key derivation function.
+It uses a large, fixed memory region to make brute-force computation expensive.
+The implementation uses the Rust [`argon2`](https://docs.rs/argon2/latest/argon2/) crate.
+
+```yaml
+thresholds:
+  - name: moderate-suspicion
+    expression:
+      all:
+        - weight >= 10
+        - weight < 20
+    action: CHALLENGE
+    challenge:
+      algorithm: argon2id
+      difficulty: 6
+```
+
+See [thresholds](/docs/configuration/thresholds.md) for rules based on request weight.

@@ -1,0 +1,382 @@
+# Expression-based rule matching
+
+Most of the BotStopper matchers let you match individual parts of a request and only those parts in isolation. In order to defend a service in depth, you often need the ability to match against multiple aspects of a request. BotStopper implements [Common Expression Language (CEL)](https://cel.dev) to let administrators define these more advanced rules. This allows you to tailor your approach for the individual services you are protecting.
+
+As an example, here is a rule that lets you allow JSON API requests through BotStopper:
+
+```yaml
+- name: allow-api-requests
+  action: ALLOW
+  expression:
+    all:
+      - '"Accept" in headers'
+      - 'headers["Accept"] == "application/json"'
+      - 'path.startsWith("/api/")'
+```
+
+This is an advanced feature and as such it is easy to get yourself in trouble with it. Use this with care.
+
+## Common Expression Language (CEL)
+
+CEL is an expression language made by Google as a part of their access control lists system. As programs grow more complicated and users have the need to express more complicated security requirements, they often want the ability to just run a small bit of code to check things for themselves. CEL expressions are built for this. They are implicitly sandboxed so that they cannot affect the system they are running in and also designed to evaluate as fast as humanly possible.
+
+Imagine a CEL expression as the contents of an `if` statement in JavaScript or the `WHERE` clause in SQL. Consider this example expression:
+
+```python
+userAgent == ""
+```
+
+This is roughly equivalent to the following in JavaScript:
+
+```js
+if (userAgent == "") {
+  // Do something
+}
+```
+
+Using these expressions, you can define more elaborate rules as facts and circumstances demand. For more information about the syntax and grammar of CEL, take a look at [the language specification](https://github.com/google/cel-spec/blob/master/doc/langdef.md).
+
+## How BotStopper uses CEL
+
+BotStopper uses CEL to let administrators create complicated filter rules. BotStopper has several modes of using CEL:
+
+- Validating requests against single expressions
+- Validating multiple expressions and ensuring at least one of them are true (`any`)
+- Validating multiple expressions and ensuring all of them are true (`all`)
+
+The common pattern is that every BotStopper expression returns `true`, `false`, or raises an error.
+
+### Single expressions
+
+A single expression that returns either `true` or `false`. If the expression returns `true`, then the action specified in the rule will be taken. If it returns `false`, BotStopper will move on to the next rule.
+
+For example, consider this rule:
+
+```yaml
+- name: no-user-agent-string
+  action: DENY
+  expression: userAgent == ""
+```
+
+For this rule, if a request comes in without a [`User-Agent` string](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/User-Agent) set, BotStopper will deny the request and return an error page.
+
+### `any` blocks
+
+An `any` block that contains a list of expressions. If any expression in the list returns `true`, then the action specified in the rule will be taken. If all expressions in that list return `false`, BotStopper will move on to the next rule.
+
+For example, consider this rule:
+
+```yaml
+- name: known-banned-user
+  action: DENY
+  expression:
+    any:
+      - remoteAddress == "8.8.8.8"
+      - remoteAddress == "1.1.1.1"
+```
+
+For this rule, if a request comes in from `8.8.8.8` or `1.1.1.1`, BotStopper will deny the request and return an error page.
+
+### `all` blocks
+
+An `all` block that contains a list of expressions. If all expressions in the list return `true`, then the action specified in the rule will be taken. If any of the expressions in the list returns `false`, BotStopper will move on to the next rule.
+
+For example, consider this rule:
+
+```yaml
+- name: go-get
+  action: ALLOW
+  expression:
+    all:
+      - userAgent.startsWith("Go-http-client/")
+      - '"go-get" in query'
+      - query["go-get"] == "1"
+```
+
+For this rule, if a request comes in matching [the signature of the `go get` command](https://pkg.go.dev/cmd/go#hdr-Remote_import_paths), BotStopper will allow it through to the target.
+
+## Variables exposed to BotStopper expressions
+
+BotStopper exposes the following variables to expressions:
+
+| Name            | Type                  | Explanation                                                                                                                                   | Example                                                      |
+| :-------------- | :-------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------- |
+| `headers`       | `map[string, string]` | The [headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers) of the request being processed.                            | `{"User-Agent": "Mozilla/5.0 Gecko/20100101 Firefox/137.0"}` |
+| `host`          | `string`              | The [HTTP hostname](https://web.dev/articles/url-parts#host) the request is targeted to.                                                      | `anubis.techaro.lol`                                         |
+| `contentLength` | `int64`               | The numerical value of the `Content-Length` header.                                                                                           |
+| `load_1m`       | `double`              | The current system load average over the last one minute. This is useful for making [load-based checks](#using-the-system-load-average).      |
+| `load_5m`       | `double`              | The current system load average over the last five minutes. This is useful for making [load-based checks](#using-the-system-load-average).    |
+| `load_15m`      | `double`              | The current system load average over the last fifteen minutes. This is useful for making [load-based checks](#using-the-system-load-average). |
+| `method`        | `string`              | The [HTTP method](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods) in the request being processed.                        | `GET`, `POST`, `DELETE`, etc.                                |
+| `path`          | `string`              | The [path](https://web.dev/articles/url-parts#pathname) of the request being processed.                                                       | `/`, `/api/memes/create`                                     |
+| `query`         | `map[string, string]` | The [query parameters](https://web.dev/articles/url-parts#query) of the request being processed.                                              | `?foo=bar` -> `{"foo": "bar"}`                               |
+| `remoteAddress` | `string`              | The IP address of the client.                                                                                                                 | `1.1.1.1`                                                    |
+| `userAgent`     | `string`              | The [`User-Agent`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/User-Agent) string in the request being processed.     | `Mozilla/5.0 Gecko/20100101 Firefox/137.0`                   |
+
+Of note: in many languages when you look up a key in a map and there is nothing there, the language will return some "falsy" value like `undefined` in JavaScript, `None` in Python, or the zero value of the type in Go. In CEL, if you try to look up a value that does not exist, execution of the expression will fail and BotStopper will return an error.
+
+In order to avoid this, make sure the header or query parameter you are testing is present in the request with an `all` block like this:
+
+```yaml
+- name: challenge-wiki-history-page
+  action: CHALLENGE
+  expression:
+    all:
+      - 'path == "/index.php"'
+      - '"title" in query'
+      - '"action" in query'
+      - 'query["action"] == "history"'
+```
+
+This rule throws a challenge if and only if all of the following conditions are true:
+
+- The URL path is `/index.php`
+- The URL query string contains a `title` value
+- The URL query string contains an `action` value
+- The URL query string's `action` value is `"history"`
+
+So given an HTTP request like this:
+
+```text
+GET /index.php?title=Index&action=history HTTP/1.1
+User-Agent: Mozilla/5.0 Gecko/20100101 Firefox/137.0
+Host: wiki.int.techaro.lol
+X-Real-IP: 8.8.8.8
+```
+
+BotStopper would return a challenge because all of those conditions are true.
+
+### Using the system load average
+
+In Unix-like systems (such as Linux), every process on the system has to wait its turn to be able to run. This means that as more processes on the system are running, they need to wait longer to be able to execute. The [load average](<https://en.wikipedia.org/wiki/Load_(computing)>) represents the number of processes that want to be able to run but can't run yet. This metric isn't the most reliable to identify a cause, but is great at helping to identify symptoms.
+
+BotStopper lets you use the system load average as an input to expressions so that you can make dynamic rules like "when the system is under a low amount of load, dial back the protection, but when it's under a lot of load, crank it up to the mix". This lets you get all of the blocking features of BotStopper in the background but only really expose BotStopper to users when the system is actively being attacked.
+
+This is best combined with the [weight](/docs/policies/request-weight.md) and [threshold](/docs/configuration/thresholds.md) systems so that you can have BotStopper dynamically respond to attacks. Consider these rules in the default configuration file:
+
+```yaml
+## System load based checks.
+# If the system is under high load for the last minute, add weight.
+- name: high-load-average
+  action: WEIGH
+  expression: load_1m >= 10.0 # make sure to end the load comparison in a .0
+  weight:
+    adjust: 20
+
+# If it is not for the last 15 minutes, remove weight.
+- name: low-load-average
+  action: WEIGH
+  expression: load_15m <= 4.0 # make sure to end the load comparison in a .0
+  weight:
+    adjust: -10
+```
+
+This combination of rules makes BotStopper dynamically react to the system load and only kick in when the system is under attack.
+
+Something to keep in mind about system load average is that it is not aware of the number of cores the system has. If you have a 16 core system that has 16 processes running but none of them is hogging the CPU, then you will get a load average below 16. If you are in doubt, make your "high load" metric at least two times the number of CPU cores and your "low load" metric at least half of the number of CPU cores. For example:
+
+|      Kind | Core count | Load threshold |
+| --------: | :--------- | :------------- |
+| high load | 4          | `8.0`          |
+|  low load | 4          | `2.0`          |
+| high load | 16         | `32.0`         |
+|  low load | 16         | `8`            |
+
+Also keep in mind that this does not account for other kinds of latency like I/O latency. A system can have its web applications unresponsive due to high latency from a MySQL server but still have that web application server report a load near or at zero.
+
+## Functions exposed to BotStopper expressions
+
+BotStopper expressions can be augmented with the following functions:
+
+### `missingHeader`
+
+Available in `bot` expressions.
+
+```ts
+function missingHeader(headers: Record<string, string>, key: string) bool
+```
+
+`missingHeader` returns `true` if the request does not contain a header. This is useful when you are trying to assert behavior such as:
+
+```yaml
+# Adds weight to old versions of Chrome
+- name: old-chrome
+  action: WEIGH
+  weight:
+    adjust: 10
+  expression:
+    all:
+      - userAgent.matches("Chrome/[1-9][0-9]?\\.0\\.0\\.0")
+      - missingHeader(headers, "Sec-Ch-Ua")
+```
+
+### `randInt`
+
+Available in all expressions.
+
+```ts
+function randInt(n: int): int;
+```
+
+randInt returns a randomly selected integer value in the range of `[0,n)`. This is a thin wrapper around [Go's math/rand#Intn](https://pkg.go.dev/math/rand#Intn). Be careful with this as it may cause inconsistent behavior for genuine users.
+
+This is best applied when doing explicit block rules, eg:
+
+```yaml
+# Denies LightPanda about 75% of the time on average
+- name: deny-lightpanda-sometimes
+  action: DENY
+  expression:
+    all:
+      - userAgent.matches("LightPanda")
+      - randInt(16) >= 4
+```
+
+It seems counter-intuitive to allow known bad clients through sometimes, but this allows you to confuse attackers by making BotStopper' behavior random. Adjust the thresholds and numbers as facts and circumstances demand.
+
+### `regexSafe`
+
+Available in `bot` expressions.
+
+```ts
+function regexSafe(input: string): string;
+```
+
+`regexSafe` takes a string and escapes it for safe use inside of a regular expression. This is useful when you are creating regular expressions from headers or variables such as `remoteAddress`.
+
+| Input                      | Output          |
+| :------------------------- | :-------------- |
+| `regexSafe("1.2.3.4")`     | `1\\.2\\.3\\.4` |
+| `regexSafe("techaro.lol")` | `techaro\\.lol` |
+| `regexSafe("star*")`       | `star\\*`       |
+| `regexSafe("plus+")`       | `plus\\+`       |
+| `regexSafe("{braces}")`    | `\\{braces\\}`  |
+| `regexSafe("start^")`      | `start\\^`      |
+| `regexSafe("back\\slash")` | `back\\\\slash` |
+| `regexSafe("dash-dash")`   | `dash\\-dash`   |
+
+### `segments`
+
+Available in `bot` expressions.
+
+```ts
+function segments(path: string): string[];
+```
+
+`segments` returns the number of slash-separated path segments, ignoring the leading slash. Here is what it will return with some common paths:
+
+| Input                    | Output                 |
+| :----------------------- | :--------------------- |
+| `segments("/")`          | `[""]`                 |
+| `segments("/foo/bar")`   | `["foo", "bar"] `      |
+| `segments("/users/xe/")` | `["users", "xe", ""] ` |
+
+> **Note.**
+> If the path ends with a `/`, then the last element of the result will be an empty string. This is because `/users/xe` and `/users/xe/` are semantically different paths.
+
+This is useful if you want to write rules that allow requests that have no query parameters only if they have less than two path segments:
+
+```yaml
+- name: two-path-segments-no-query
+  action: ALLOW
+  expression:
+    all:
+      - size(query) == 0
+      - size(segments(path)) < 2
+```
+
+### DNS Functions
+
+BotStopper can also perform DNS lookups as a part of its expression evaluation. This can be useful for doing things like checking for a valid [Forward-confirmed reverse DNS (FCrDNS)](https://en.wikipedia.org/wiki/Forward-confirmed_reverse_DNS) record.
+
+#### `arpaReverseIP`
+
+Available in `bot` expressions.
+
+```ts
+function arpaReverseIP(ip: string): string;
+```
+
+`arpaReverseIP` takes an IP address and returns its value in [ARPA notation](https://www.ietf.org/rfc/rfc2317.html). This can be useful when matching PTR record patterns.
+
+| Input                          | Output                                                            |
+| :----------------------------- | :---------------------------------------------------------------- |
+| `arpaReverseIP("1.2.3.4")`     | `4.3.2.1`                                                         |
+| `arpaReverseIP("2001:db8::1")` | `1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2` |
+
+#### `lookupHost`
+
+Available in `bot` expressions.
+
+```ts
+function lookupHost(host: string): string[];
+```
+
+`lookupHost` performs a DNS lookup for the given hostname and returns a list of IP addresses.
+
+```yaml
+- name: cloudflare-ip-in-host-header
+  action: DENY
+  expression: '"104.16.0.0" in lookupHost(headers["Host"])'
+```
+
+#### `reverseDNS`
+
+Available in `bot` expressions.
+
+```ts
+function reverseDNS(ip: string): string[];
+```
+
+`reverseDNS` takes an IP address and returns the DNS names associated with it. This is useful when you want to check PTR records of an IP address.
+
+```yaml
+- name: allow-googlebot
+  action: ALLOW
+  expression: 'reverseDNS(remoteAddress).endsWith(".googlebot.com")'
+```
+
+> **Warning.**
+> Do not use this for validating the legitimacy of an IP address. It is possible for DNS records to be out of date or otherwise manipulated. Use [`verifyFCrDNS`](#verifyfcrdns) instead for a more reliable result.
+
+#### `verifyFCrDNS`
+
+Available in `bot` expressions.
+
+```ts
+function verifyFCrDNS(ip: string): bool;
+function verifyFCrDNS(ip: string, pattern: string): bool;
+```
+
+`verifyFCrDNS` checks if the reverse DNS of an IP address matches its forward DNS. This is a common technique to filter out spam and bot traffic. `verifyFCrDNS` comes in two forms:
+
+- `verifyFCrDNS(remoteAddress)` will check that the reverse DNS of the remote address resolves back to the remote address. If no PTR records, returns true.
+- `verifyFCrDNS(remoteAddress, pattern)` will check that the reverse DNS of the remote address is matching with pattern and that name resolves back to the remote address.
+
+This is best used in rules like this:
+
+```yaml
+- name: require-fcrdns-for-post
+  action: DENY
+  expression:
+    all:
+      - method == "POST"
+      - "!verifyFCrDNS(remoteAddress)"
+```
+
+Here is an another example that allows requests from telegram:
+
+```yaml
+- name: telegrambot
+  action: ALLOW
+  expression:
+    all:
+      - userAgent.matches("TelegramBot")
+      - verifyFCrDNS(remoteAddress, "ptr\\.telegram\\.org$")
+```
+
+## Life advice
+
+Expressions are very powerful. This is a benefit and a burden. If you are not careful with your expression targeting, you will be liable to get yourself into trouble. If you are at all in doubt, throw a `CHALLENGE` over a `DENY`. Legitimate users can easily work around a `CHALLENGE` result with a [proof of work challenge](https://anubis.techaro.lol/docs/design/why-proof-of-work). Bots are less likely to be able to do this.
+
+See [configuration](/docs/configuration.md) for deployment configuration.

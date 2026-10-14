@@ -1,0 +1,30 @@
+# Policy configuration
+
+BotStopper uses Anubis policy files to allow, deny, challenge, and weigh requests.
+Policies can use YAML or JSON. Put bot rules in the top-level `bots` list.
+Set the policy file with `--policy-fname` or `POLICY_FNAME`.
+
+The shipped policy challenges browser traffic and includes rules for known bots and crawlers.
+Custom rules can use request paths, user agents, headers, IP ranges, or CEL expressions.
+
+## Policy topics
+
+- [Bot rules](/docs/policies/rules.md): matching, rule order, actions, challenge configuration, and IP filtering.
+- [Request weight](/docs/policies/request-weight.md): `WEIGH` rules, thresholds, and headers for downstream risk calculations.
+- [Storage](/docs/policies/storage.md): memory, bbolt, S3-compatible storage, Valkey, and Redis Sentinel.
+- [Metrics](/docs/policies/metrics.md): listener configuration, debugging, TLS, mTLS, and HTTP basic authentication.
+- [Logging](/docs/policies/logging.md): log levels, standard error, file rotation, and systemd access.
+- [Honeypot](/docs/policies/honeypot.md): the built-in honeypot entry point and configuration.
+
+## Related configuration
+
+- [Default allow behavior](/docs/configuration/default-allow-behavior.md)
+- [Imports](/docs/configuration/import.md)
+- [CEL expressions](/docs/configuration/expressions.md)
+- [Weight thresholds](/docs/configuration/thresholds.md)
+- [Challenge methods](/docs/configuration.md#challenge-methods) and [extensions](/docs/extensions.md)
+- [Custom status codes](/docs/configuration/custom-status-codes.md)
+- [Open Graph](/docs/configuration/open-graph.md)
+- [Imprint / Impressum](/docs/configuration/impressum.md)
+
+See [configuration](/docs/configuration.md) for deployment configuration.

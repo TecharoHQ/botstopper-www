@@ -1,0 +1,80 @@
+# Default allow behavior
+
+BotStopper evaluates bot rules in order. `ALLOW`, `DENY`, and `CHALLENGE` stop rule evaluation.
+A matching `WEIGH` rule changes the request weight and continues to the next rule.
+
+If no terminal bot rule matches, BotStopper evaluates [weight thresholds](/docs/configuration/thresholds.md) in order.
+If no threshold matches, the implicit `default/allow` rule allows the request.
+
+The shipped policy includes rules and thresholds that challenge browser traffic.
+The implicit allow rule does not bypass those checks.
+
+## Example: Minimal policy
+
+If your policy only blocks a specific bot, all other requests will be allowed:
+### JSON
+
+```json
+{
+  "bots": [
+    {
+      "name": "block-amazonbot",
+      "user_agent_regex": "Amazonbot",
+      "action": "DENY"
+    }
+  ]
+}
+```
+
+### YAML
+
+```yaml
+bots:
+  - name: block-amazonbot
+    user_agent_regex: Amazonbot
+    action: DENY
+```
+
+## How to deny by default
+
+If you want to deny all traffic except what you explicitly allow, add a catch-all deny rule at the end of your policy list. Make sure to add ALLOW rules for any traffic you want to permit before this rule.
+### JSON
+
+```json
+{
+  "bots": [
+    {
+      "name": "allow-goodbot",
+      "user_agent_regex": "GoodBot",
+      "action": "ALLOW"
+    },
+    {
+      "name": "catch-all-deny",
+      "path_regex": ".*",
+      "action": "DENY"
+    }
+  ]
+}
+```
+
+### YAML
+
+```yaml
+bots:
+  - name: allow-goodbot
+    user_agent_regex: GoodBot
+    action: ALLOW
+  - name: catch-all-deny
+    path_regex: .*
+    action: DENY
+```
+
+## Final remarks
+
+- The first matching terminal rule wins. `WEIGH` rules continue evaluation.
+- The implicit allow rule is always last and cannot be removed.
+- Use your logs to monitor what traffic is being allowed by default.
+
+See [Policy Definitions](/docs/policies.md) for more details on writing rules.
+
+See [configuration](/docs/configuration.md) for deployment configuration.

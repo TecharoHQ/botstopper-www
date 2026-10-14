@@ -35,11 +35,29 @@ BotStopper sends the client-side detection logic as [brotli-compressed bytes](ht
 3. Your reverse proxy or CDN [**SHOULD**](https://www.rfc-editor.org/info/rfc2119/#section-3) send the unedited `Sec-CH-UA` and `Sec-CH-UA-Full-Version-List` headers from the client to BotStopper.
 4. Your reverse proxy or CDN [**SHOULD**](https://www.rfc-editor.org/info/rfc2119/#section-3) send the unedited `Sec-Fetch-Dest`, `Sec-Fetch-Mode`, `Sec-Fetch-Site`, and `Origin` headers from the client to BotStopper.
 
+Keep the `User-Agent` and `X-Real-IP` values consistent between challenge creation and the detector report. BotStopper rejects a report if either value differs from the challenge metadata.
+
 If a client does not accept brotli, BotStopper sends an empty file. The detector does not run, and the challenge fails.
 
 The headless extension requires WebAssembly. A browser with WebAssembly disabled, including iOS Lockdown Mode, cannot pass a policy that requires this extension. A `noWasm` report or detector-level error fails the challenge, even after both detector downloads. Individual inconclusive probes retain their existing scores.
 
 BotStopper records the detector downloads for each challenge. The URLs of the detector files contain the challenge ID, so the browser downloads the files again for each challenge (about 35 KB). The files have the header `Cache-Control: no-cache`. If a proxy or CDN serves the detector files from its cache, the downloads do not reach BotStopper, and the challenges fail.
+
+## Content Security Policy
+
+The detector uses JavaScript `Function` and `eval` to run browser probes. If your challenge page has a Content Security Policy that blocks `unsafe-eval`, those probes cannot run.
+
+BotStopper records blocked evaluation as the zero-weight `eval.blocked` signal. This signal alone does not fail the challenge, but it reduces detection coverage. The WebAssembly requirement and detector-level error checks still apply.
+
+## Fetch Metadata
+
+BotStopper checks the Fetch Metadata headers on the detector downloads and the report. The loader request uses `Sec-Fetch-Dest: script`. The WebAssembly download and report use `Sec-Fetch-Dest: empty`.
+
+The accepted values for `Sec-Fetch-Mode` are `cors` and `same-origin`. The accepted values for `Sec-Fetch-Site` are `same-origin` and `same-site`. An absent `Sec-Fetch-Dest` remains accepted for older Chromium versions.
+
+If these headers have incorrect values, BotStopper rejects the report or does not record the download. The challenge then fails.
+
+If all three headers are absent, BotStopper accepts the request. For browsers expected to send them in a secure context, their absence adds the soft `sec-fetch.missing` signal.
 
 ## Client hints
 
@@ -62,6 +80,20 @@ The detector runs at the same time as the challenge. Thus BotStopper knows the s
 - When the client submits the challenge, BotStopper uses the score. BotStopper also uses the score on all later requests of the session.
 
 `headlessNetworkHardReports` is known when BotStopper issues a challenge, because it comes from earlier reports.
+
+You can also use this count to give clients from those networks a more difficult challenge:
+
+```yaml
+bots:
+  - name: headless-network
+    action: CHALLENGE
+    expression: headlessNetworkHardReports >= 3
+    challenge:
+      algorithm: soteria
+      difficulty: 20
+```
+
+Refer to [expressions](/docs/configuration/expressions.md) and [thresholds](/docs/configuration/thresholds.md) for policy configuration.
 
 Use `headlessScore` only to deny a session. To deny a session:
 
@@ -105,3 +137,9 @@ BotStopper keeps each report for the time in `--cookie-expiration-time`.
 - `botstopper_headless_refusals_total{reason}`: The number of challenges that failed because of the detector. The reasons are `missing` (no report), `assets` (missing or late downloads), `incomplete` (unavailable WASM or a detector error), `hard`, and `error`.
 - `botstopper_headless_fetch_metadata_total{request,result}`: The number of detector requests for each Fetch Metadata result. The requests are `headless.mjs`, `headless_component.core.wasm`, and `report`. The results are `ok`, `missing`, and `wrong`. If many requests have `result="missing"`, a proxy possibly removes the headers.
 - `botstopper_headless_asset_requests_total{file,encoding}`: The number of detector downloads for each file and encoding. If many downloads have `encoding="none"`, clients or a proxy do not send `br`.
+
+## Detection limits
+
+Headless browsers can change to evade these checks. Many observations come from the client, and clients can send false reports. Use this detector with other policy rules.
+
+Additional deployment guidance adapted from the [Anubis headless browser documentation](https://anubis.techaro.lol/docs/admin/configuration/challenges/extensions/headless).
